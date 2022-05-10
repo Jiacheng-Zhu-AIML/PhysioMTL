@@ -169,7 +169,7 @@ if __name__ == "__main__":
         plt.show()
         print()
 
-    pickle_name = "public_data_for_MTL_V5_pre_25_geq55_085.pkl"
+    pickle_name = "data_and_pickle/public_data_for_MTL.pkl"
     file_open = open(pickle_name, "wb")
     pickle.dump(data_subject_dict, file_open)
     file_open.close()

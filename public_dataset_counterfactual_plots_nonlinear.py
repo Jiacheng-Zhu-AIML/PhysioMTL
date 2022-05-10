@@ -22,12 +22,15 @@ if __name__ == "__main__":
 
     """
     Draw a good-looking trend.
-    remove the outliers and do the learning
+    The outliers:
     "4": ridiculously high, just remove
+    "8": age=40, stress>70, but has very good HRV
+    "11": sleep = 0, high BMI
+    "18": age=0, 
     """
     human_feq = 2.0 * np.pi / 24
     subject_id_list = []
-    removed_subject_id_list = [4]
+    removed_subject_id_list = [4,8]
 
     def get_raw_list_from_public_data_custom(data_dict_input, removed_list=removed_subject_id_list):
         key_list = list(data_dict_input.keys())
@@ -36,7 +39,7 @@ if __name__ == "__main__":
         S_raw_list = []
         Y_raw_list = []
         for key in key_list:
-            if key in removed_list:  # 2: non-pattern, 10, 11, non-pattern?
+            if key in removed_list:
                 continue
             t_np, y_np, s_vec = data_dict_input[key]
             sample_num = t_np.shape[0]
@@ -48,7 +51,7 @@ if __name__ == "__main__":
             if key == 18:  # user_18 don't have age data
                 s_vec[0] = 22
             if key == 11:  # User_11 does not have sleep data
-                s_vec[4] = 6.5  # I use the average
+                s_vec[4] = 6.0  # I use the average
             if key == 3:
                 s_vec[5] = 60
 
@@ -63,7 +66,7 @@ if __name__ == "__main__":
 
     # Notice: process data
     t_raw_list, X_raw_list, S_raw_list, Y_raw_list, subject_id_test_list = get_raw_list_from_public_data_custom(
-        data_dict)
+        data_dict, removed_list=removed_subject_id_list)
 
     t_list, X_train_list, S_train_list, Y_train_list = process_for_PhysioMTL_pubdata(raw_t_list=t_raw_list,
                                                                                   raw_x_list=X_raw_list,
@@ -96,13 +99,13 @@ if __name__ == "__main__":
                           all_ite_num=50,
                           verbose_T_grad=True,
                           map_type="kernel", kernel_cost_function=my_cost_function_pubdata,
-                          kernel_sigma=10, T_grad_F_norm_threshold=1e-8)
+                          kernel_sigma=10, T_grad_F_norm_threshold=1e-9)
 
     PhysioMTL_model.set_aux_feature_cost_function(my_cost_function_pubdata)
 
     PhysioMTL_model.fit(X_list=X_train_list, Y_list=Y_train_list, S_list=S_train_list)
 
-    s_vec_base = np.array([[23.],  # Age
+    s_vec_base = np.array([[25.],  # Age
                            [1.80],  # Height (m)
                            [85.],  # weight (kg)
                            [1.0],  # Activity (h)
