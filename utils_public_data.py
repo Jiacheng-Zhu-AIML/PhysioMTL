@@ -21,8 +21,6 @@ def compute_list_rmse(list_a, list_b):
 
 def get_baseline_MTL_mse(baseline_model_obj, X_train_mat, Y_train_mat, raw_train_tuple, raw_test_tuple, cost_function):
 
-    # print("X_train_mat.shape =", X_train_mat.shape)
-    # print("Y_train_mat.shape =", Y_train_mat.shape)
     baseline_model_obj.fit(X_train_mat, Y_train_mat)
     prior_mean = np.median(Y_train_mat)
     model_para_list = k_nearest_model_para_pub(baseline_model_obj.coef_,
@@ -38,14 +36,11 @@ def get_pred_Y_test_mtl(model_para_list, x_raw_test_list, s_raw_test_list, prior
     Y_pred_list = []
     
     for task_i, X_np in enumerate(x_raw_test_list):
-        # print("X_np.shape =", X_np.shape)
         sample_num = X_np.shape[0]
         X_mat = np.zeros((sample_num, 3 + 6))
         X_mat[:, 0:3] = X_np
         X_mat[:, 3:] = s_raw_test_list[task_i].reshape((1, -1))
-        # print("X_mat.shape =", X_mat.shape)
         Y_pred = X_mat @ model_para_list[task_i] + prior_mean
-        # print("Y_pred.shape =", Y_pred.shape)
         Y_pred_list.append(Y_pred)
 
     return Y_pred_list
@@ -62,16 +57,13 @@ def k_nearest_model_para_pub(train_W, train_s_list, test_s_list, my_cost_functio
     model_para_mat_list = []
     for s_test in test_s_list:
         result_list = k_nearest_list_pub(s_test, train_s_list, k, my_cost_function)
-        # print("result_list =", result_list)
         index_list = []
         for result in result_list:
             for idx, train_s_vec in enumerate(train_s_list):
                 if np.max(train_s_vec - result) < 1e-6:
                     index_list.append(idx)
                     break
-            # index_list.append(train_s_list.index(result))
         weight_selected = train_W[:, index_list]    # (4, 2)
-        # print("weight_selected.shape =", weight_selected.shape)
         model_para_mat_list.append(weight_selected)
     return model_para_mat_list
 
@@ -135,8 +127,6 @@ def get_raw_list_from_public_data(data_dict_input):
         x_raw = np.asarray([np.sin(human_feq * t_np),
                             np.cos(human_feq * t_np),
                             np.ones(sample_num, )]).T
-        # print("x_raw.shape =", x_raw.shape)
-
         t_raw_list.append(t_np)
         X_raw_list.append(x_raw)
         S_raw_list.append(s_vec)
@@ -160,7 +150,6 @@ def process_for_PhysioMTL_pubdata(raw_t_list, raw_x_list, raw_s_list, raw_y_list
 
         # Notice:! S:    (6,) -> [s_0, s_1,...,s_5, 1].T  (7, 1)
         S_train_vec = np.hstack([s_vec, 1]).reshape(-1, 1)
-        # print("S_train_vec.shape =", S_train_vec)
         S_train_list.append(S_train_vec)
 
     return raw_t_list, X_train_list, S_train_list, Y_train_list
@@ -173,7 +162,6 @@ def investigate_age(T_map, s_vec_base, X_test_plot, t_test_plot):
         s_vec_this = s_vec_base.copy()
         s_vec_this[0] = age_this
         W_this = T_map @ s_vec_this
-        # print("W_this.shape =", W_this.shape)
         y_pred = X_test_plot @ W_this
         plt.plot(t_test_plot, y_pred, label="age=" + str(round(age_this, 3)), c="black", alpha=0.1 + 0.09 * i)
     plt.legend()
@@ -273,7 +261,6 @@ def investigate_all_model(model, s_vec_base):
         s_vec_this = s_vec_base.copy()
         s_vec_this[0] = age_this
         y_pred = model.predict([X_test], [s_vec_this])
-        # print("Y_pred[0].shape =", Y_pred[0].shape)
         plt.plot(t_test, y_pred[0], label="age=" + str(round(age_this, 3)), c="black", alpha=0.1 + 0.09 * i)
     plt.legend()
 
@@ -362,7 +349,6 @@ def investigate_all_model_save(model, s_vec_base):
         s_vec_this = s_vec_base.copy()
         s_vec_this[0] = age_this
         y_pred = model.predict([X_test], [s_vec_this])
-        # print("Y_pred[0].shape =", Y_pred[0].shape)
         ax.plot(t_test, y_pred[0], label="age=" + str(round(age_this, 2)),
                 c="black", alpha=0.1 + 0.09 * i, **kwargs_input)
     change_labels(ax)

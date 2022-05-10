@@ -1,6 +1,5 @@
 import numpy as np
 from matplotlib import pyplot as plt
-from PhysioMTL_solver.PhysioMTL_utils import get_rainbow_curves
 import matplotlib.cm as cm
 
 
@@ -179,12 +178,9 @@ class PhysioMTL:
 
                     # Notice: gradient with regard
                     for t_t_ite in range(n_task):
-                        # w_t_grad = w_t_grad - self.alpha * (T_gd @ S_list[t_t_ite] - W_np[:, t_t_ite:t_t_ite+1]).T
                         w_t_grad = w_t_grad - self.alpha * (T_gd @ S_np[:, t_t_ite:t_t_ite+1] - W_np[:, t_t_ite:t_t_ite + 1]).T
-                    # print("w_t_grad.shape =", w_t_grad.shape)
                     grad_W[:, t_ite:t_ite+1] = w_t_grad.T
 
-                # print("grad_W =", grad_W)
                 W_np = W_np - self.W_lr * grad_W
 
                 # Notice: Check convergence
@@ -208,13 +204,10 @@ class PhysioMTL:
     # Notice: Given all the feature samples, predict label
     def predict(self, X_list=None, S_list=None):
         if (X_list is None) and (S_list is None):
-            # predict on existing tasks
             pred_Y_list = []
             for i, X_np in enumerate(self.X_data_list):
-                # print("X_np.shape =", X_np.shape)
                 W_task = self.W[:, i:i + 1]  # (3,1)
                 pred_Y = self.X_data_list[i] @ W_task
-                # print("pred_Y.shape =", pred_Y.shape)
                 pred_Y_list.append(pred_Y)
         else:
             # predict for unknown tasks
@@ -276,117 +269,6 @@ def obtain_original_para(linear_para_np):
 colors_f = cm.rainbow(0.1 * np.linspace(0, 10, 101))
 l_np = np.linspace(0, 10, 101)
 def get_rainbow_from_s(s):
-    # print("l_np =", l_np)
-    # color_index = list(l_np).index(s)
     color_select = min(list(l_np), key= lambda x:abs(x - s))
-    # print("color_select =", color_select)
     color_index = list(l_np).index(color_select)
     return colors_f[color_index]
-
-
-if __name__ == "__main__":
-
-    print(1)
-
-    # # Notice: first step, generate data
-    # s_input_list = [1, 2, 2.2, 5, 4, 6, 6.8, 7.2, 9.9, 3, 7.6, 7.4, 7.8, 8.0, 8.2]
-    # n_for_pred = 7
-    #
-    # raw_data, para_list = get_rainbow_curves(s_input_list)
-    # data_list = raw_data[:-n_for_pred]
-    # test_list = raw_data[-n_for_pred:]
-    #
-    # # for para in para_list:
-    # #     print(para)
-    # base_para_np = np.asarray(para_list).T
-    # print("base_para_np =")
-    # print(base_para_np)
-    #
-    # task_num = len(data_list)
-    # test_task_num = len(test_list)
-    # # print("test_task_num =", test_task_num)
-    #
-    # # Notice: data featurization for MapMTL
-    # freq = 0.375
-    # X_np_list, Y_np_list, S_np_list = multi_sin_featurization(data_list, freq=0.375)
-    # X_test_list, Y_test_list, S_test_list = multi_sin_featurization(test_list, freq=0.375)
-    #
-    # '''
-    # X_np_list[0].shape = (30, 3)
-    # Y_np_list[0].shape = (30, 1)
-    # S_np_list[0].shape = (2, 1)
-    # '''
-    #
-    #
-    # # Notice: MapMTL
-    # def my_cost_function(x, y):
-    #     return np.sqrt(np.mean(np.square(x - y)))
-    #
-    # # T_init_input = np.array([[0.2, 3.0],
-    # #                          [0.4, -1.8],
-    # #                          [5, 35]])
-    # T_init_input = None
-    # mapmtl_model = MapMTL(para_0=0.1, T_initial=T_init_input)
-    # mapmtl_model.set_aux_feature_cost_function(my_cost_function)
-    #
-    # mapmtl_model.fit(X_list=X_np_list, Y_list=Y_np_list, S_list=S_np_list)
-    #
-    # Pi_est = mapmtl_model.Pi    # Task similarity
-    # T_est = mapmtl_model.T      # The Map
-    # W_update = mapmtl_model.W   # The
-    # print("W_update =")
-    # print(W_update)
-    # print("T_est =", T_est)
-    #
-    # obtain_original_para(W_update)
-    #
-    # W_pred = T_est @ np.array([[9.9], [1.0]])
-    # print("W_pred =", W_pred)
-    #
-    #
-    # # Notice: On the unobserved test set
-    # test_num = 30
-    # t_test = np.linspace(0, 26, test_num)
-    # X_vct_t = np.asarray([np.sin(freq * t_test),
-    #                       np.cos(freq * t_test),
-    #                       np.ones(test_num, )]).T
-    # # Notice: predict the training set
-    #
-    # pred_Y_list = []
-    #
-    # for i, X_np in enumerate(X_np_list):
-    #     # print("X_np.shape =", X_np.shape)
-    #     W_task = W_update[:, i:i+1]     # (3,1)
-    #     pred_Y = X_vct_t @ W_task
-    #     # print("pred_Y.shape =", pred_Y.shape)
-    #     pred_Y_list.append(pred_Y)
-    #
-    #
-    # # Notice: Predict on the testing set
-    # pred_test_Y_list = []
-    # for i, X_np in enumerate(X_test_list):
-    #     W_pred = T_est @ S_test_list[i]
-    #     pred_test_Y = X_vct_t @ W_pred
-    #     pred_test_Y_list.append(pred_test_Y)
-    #
-    # # Notice: plot the training data and prediction in training set
-    # fig_c = plt.figure(666, figsize=(8, 6))
-    # for s_index, data_s in enumerate(data_list):
-    #     s_value = S_np_list[s_index][0, 0]
-    #     plt.scatter(data_s[0], data_s[1], label="task code:" + str(data_s[2]), color=get_rainbow_from_s(s_value))
-    #     plt.plot(t_test, pred_Y_list[s_index], label="pred" + str(data_s[2]), color=get_rainbow_from_s(s_value))
-    # plt.legend()
-    # plt.xlim(-2, 26)
-    # plt.ylim(30, 120)
-    #
-    # # Notice: Generalization
-    # # Notice: step 1, plot the test data
-    # fig_test = plt.figure(233, figsize=(8, 6))
-    # for s_index, data_s in enumerate(test_list):
-    #     s_value = S_test_list[s_index][0, 0]
-    #     plt.scatter(data_s[0], data_s[1], label="task code:" + str(data_s[2]), color=get_rainbow_from_s(s_value))
-    #     plt.plot(t_test, pred_test_Y_list[s_index], label="test pred" + str(data_s[2]), color=get_rainbow_from_s(s_value))
-    # plt.legend()
-    # plt.xlim(-2, 26)
-    # plt.ylim(30, 120)
-    # plt.show()

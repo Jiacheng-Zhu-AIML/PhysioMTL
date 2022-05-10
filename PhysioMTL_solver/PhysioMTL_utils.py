@@ -23,7 +23,6 @@ def get_rainbow_curves(s_list):
     para_list = []
 
     noise_index = 0.3
-    # s_list = [1, 2, 5, 7, 10]
     for index, s in enumerate(s_list):
         t_i_raw = np.linspace(0, 25, 30) + np.random.normal(loc=0, scale=0.0, size=30)
         noise_i_raw = np.random.normal(loc=0, scale=noise_index, size=30)
@@ -112,18 +111,14 @@ def process_for_MTL(raw_t_list, raw_x_list, raw_s_list, raw_y_list):
 
     task_num = len(raw_t_list)
 
-    X_mat = np.zeros((task_num, 30, 4)) # n_features = 3(x) + 1(s)
+    X_mat = np.zeros((task_num, 30, 4))
     Y_mat = np.zeros((task_num, 30))
-    # X_mat_pre = np.concatenate(raw_x_list, axis=2)
-    # print("X_mat_pre.shape =", X_mat_pre.shape)
 
     for task_i, s_value in enumerate(raw_s_list):
         X_mat[task_i:task_i + 1, :, 0:3] = raw_x_list[task_i]
         X_mat[task_i:task_i + 1, :, 3] = raw_s_list[task_i]
         Y_mat[task_i:task_i + 1, :] = raw_y_list[task_i]
 
-    # print("X_mat =", X_mat)
-    # print("Y_mat =", Y_mat)
     return X_mat, Y_mat
 
 
@@ -139,12 +134,10 @@ def k_nearest_model_para(train_W, train_s_list, test_s_list, k=2):
     model_para_mat_list = []
     for s_test in test_s_list:
         result_list = k_nearest_list(s_test, train_s_list, k)
-        # print(result_list)
         index_list = []
         for result in result_list:
             index_list.append(train_s_list.index(result))
         weight_selected = train_W[:, index_list]    # (4, 2)
-        # print("weight_selected.shape =", weight_selected.shape)
         model_para_mat_list.append(weight_selected)
     return model_para_mat_list
 
@@ -158,18 +151,10 @@ def compute_list_rmse(list_a, list_b):
     for l_i in range(num_task):
         array_a = list_a[l_i]
         array_b = list_b[l_i]
-        # print("array_a.shape =", array_a.shape)
-        # print("array_b.shape =", array_b.shape)
         temp_rmse = np.sqrt(np.mean(np.square(array_a - array_b)))
-        # print("temp_rmse =", temp_rmse)
         rmse += temp_rmse
     return rmse / num_task
 
-
-# Notice: Generalization
-# def KNN_generalization(model_para_mat, training_s )
-
-# Notice # Notice # All about visualization! # Notice # Notice #
 
 # Notice: Visualize the task relation by rainbow color
 colors_f = cm.rainbow(0.1 * np.linspace(0, 10, 101))
@@ -177,10 +162,7 @@ l_np = np.linspace(0, 10, 101)
 
 
 def get_rainbow_from_s(s):
-    # print("l_np =", l_np)
-    # color_index = list(l_np).index(s)
     color_select = min(list(l_np), key= lambda x:abs(x - s))
-    # print("color_select =", color_select)
     color_index = list(l_np).index(color_select)
     return colors_f[color_index]
 
@@ -188,7 +170,6 @@ def get_rainbow_from_s(s):
 # Notice # scatter data samples
 def scatter_data_with_s(plt, t_list_raw, Y_raw_list, S_raw_list, rainbow_func=get_rainbow_from_s, **kwargs):
     for task_i, s_value in enumerate(S_raw_list):
-        # s_value = S_np_list[s_index][0, 0]
         plt.scatter(t_list_raw[task_i], Y_raw_list[task_i], label="task code:" + str(s_value), color=rainbow_func(s_value), **kwargs)
         # plt.plot(t_test, pred_Y_list[task_i], label="pred" + str(s_value), color=get_rainbow_from_s(s_value))
     return plt
@@ -201,23 +182,6 @@ def plot_data_curve_with_s(t_list_or_np, Y_list, S_raw_list, rainbow_func=get_ra
             plt.plot(t_list_or_np[task_i], Y_list[task_i], label="pred" + str(s_value), color=rainbow_func(s_value), **kwargs)
 
 
-if __name__ == "__main__":
-    print()
-
-    s_list = [1,2,3]
-
-    # get_rainbow_curves_new(s_list)
-
-    s_input_list = [1, 2, 2.2, 4, 5, 6, 6.8]
-    s_test_list = [0.2, 3, 3.5, 7.5, 8.5, 8.0]
-
-    # for s_test in s_test_list:
-    #     result_list = k_nearest_list(s_test, s_input_list, 2)
-    #     print(result_list)
-    #     index_list = []
-    #     for result in result_list:
-    #         index_list.append(s_input_list.index(result))
-    #     print("index_list =", index_list)
 
 
 

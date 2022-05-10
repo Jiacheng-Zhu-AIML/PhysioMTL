@@ -18,7 +18,7 @@ def assign_pd_time(x_1, x_2):
     return pd.to_datetime(date_str)
 
 
-# Use the rmssd as teh HRV value
+# Use the rmssd as the HRV value
 def get_subject_hrv_rmssd_pd(rr_pd_raw_input):
     #
     rr_pd = rr_pd_raw_input.copy()
@@ -69,9 +69,6 @@ def get_subject_sleep_hour(sleep_pd):
     return sleep_pd["Total Minutes in Bed"].sum() / 60.0
 
 
-# exercise data
-
-# Comptue exercise time for
 def assign_pd_time_activity(start, end):
     return pd.to_timedelta(end + ":00") - pd.to_timedelta(start + ":00")
 
@@ -93,7 +90,6 @@ if __name__ == "__main__":
     data_subject_dict = {}
 
     for i in range(1, 23):
-        # i = 14
         print()
         print("i =", i)
         user_folder = "../MMASH/DataPaper/user_" + str(i)
@@ -126,20 +122,6 @@ if __name__ == "__main__":
         rr_file = user_folder + "/RR.csv"
         rr_pd = pd.read_csv(rr_file, header=0)
         subject_hrv_pd = get_subject_hrv_rmssd_pd(rr_pd)
-
-        # if i in [9, 12, 13, 14]:
-        #     low_noise_index = subject_hrv_pd["value"] < 55
-        #     low_noise_num = len(subject_hrv_pd[low_noise_index].index)
-        #     low_noise_df = subject_hrv_pd[low_noise_index].sample(int(0.85 * low_noise_num))
-        #     subject_hrv_pd = subject_hrv_pd[~subject_hrv_pd.index.isin(low_noise_df.index)]
-        #     z_score_msk = (np.abs(stats.zscore(subject_hrv_pd["value"])) < 2.50)
-        #     subject_hrv_pd = subject_hrv_pd.loc[z_score_msk]
-        # # elif age_height_weight[0] > 27:
-        # #     z_score_msk = (np.abs(stats.zscore(subject_hrv_pd["value"])) < 0.70)
-        # #     subject_hrv_pd = subject_hrv_pd.loc[z_score_msk]
-        # else:
-        #     z_score_msk = (np.abs(stats.zscore(subject_hrv_pd["value"])) < 2.5)
-        #     subject_hrv_pd = subject_hrv_pd.loc[z_score_msk]
 
         low_noise_index = subject_hrv_pd["value"] < 55
         low_noise_num = len(subject_hrv_pd[low_noise_index].index)

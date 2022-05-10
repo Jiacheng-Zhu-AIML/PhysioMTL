@@ -28,7 +28,7 @@ if __name__ == "__main__":
     """
     human_feq = 2.0 * np.pi / 24
     subject_id_list = []
-    removed_subject_id_list = [4]
+    removed_subject_id_list = [4, 8]
 
 
     def get_raw_list_from_public_data_custom(data_dict_input, removed_list=removed_subject_id_list):
@@ -38,15 +38,13 @@ if __name__ == "__main__":
         S_raw_list = []
         Y_raw_list = []
         for key in key_list:
-            if key in removed_list:  # 2: non-pattern, 10, 11, non-pattern?
+            if key in removed_list:
                 continue
             t_np, y_np, s_vec = data_dict_input[key]
             sample_num = t_np.shape[0]
             x_raw = np.asarray([np.sin(human_feq * t_np),
                                 np.cos(human_feq * t_np),
                                 np.ones(sample_num, )]).T
-
-            # s_vec[1] = s_vec[1] # / 100
 
             # Notice: Naive imputation methods
             if key == 18:  # user_18 don't have age data

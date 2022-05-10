@@ -13,7 +13,6 @@ import ot
 import pickle
 
 
-# costumed function for qualitative illustration
 # Notice # scatter data samples
 def scatter_data_with_s_qua(plt, t_list_raw, Y_raw_list, S_raw_list, rainbow_func=get_rainbow_from_s, **kwargs):
     for task_i, s_value in enumerate(S_raw_list):
