@@ -329,8 +329,9 @@ def investigate_all_model(model, s_vec_base):
 def change_labels(ax):
     ax.legend(loc="lower right", fontsize=14)
 
-    # Noitce: 61, 89 for kernel map
-    ax.set_ylim(65, 100)
+    # Notice: 61, 89 for kernel map
+    # Notice: (65, 120) for linear map
+    ax.set_ylim(65, 120)
 
     ax.set_xticks([9, 12, 15, 18, 21, 24, 27, 30, 33, 36])
     ax.set_xticklabels(["9:00", "12:00", "15:00", "18:00", "21:00", "24:00",
@@ -563,7 +564,7 @@ def investigate_all_model_save_linear(model, s_vec_base):
                    "Activity=1.5 (hours)", "Stress=40 (unit)"]
 
     # ax.set_ylim(61, 89) Notice: (61, 89) for kernel method
-    ax.set_ylim(65, 105)
+    ax.set_ylim(65, 120)
     ax.set_xticks([9, 12, 15, 18, 21, 24, 27, 30, 33, 36])
     ax.set_xticklabels(["9:00", "12:00", "15:00", "18:00", "21:00", "24:00",
                         "3:00", "6:00", "9:00", "12:00"], fontsize=16, rotation=30)
