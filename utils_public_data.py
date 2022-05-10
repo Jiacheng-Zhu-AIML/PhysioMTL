@@ -331,7 +331,7 @@ def change_labels(ax):
 
     # Notice: 61, 89 for kernel map
     # Notice: (65, 120) for linear map
-    ax.set_ylim(65, 120)
+    ax.set_ylim(65, 100)
 
     ax.set_xticks([9, 12, 15, 18, 21, 24, 27, 30, 33, 36])
     ax.set_xticklabels(["9:00", "12:00", "15:00", "18:00", "21:00", "24:00",
