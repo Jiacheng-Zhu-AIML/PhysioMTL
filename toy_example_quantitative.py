@@ -1,16 +1,13 @@
-from PhysioMTL_solver.PhysioMTL_utils import get_rainbow_curves, \
-    get_rainbow_curves_new, process_for_PhysioMTL, get_rainbow_from_s, process_for_MTL, \
-    scatter_data_with_s, plot_data_curve_with_s, k_nearest_model_para, compute_list_rmse
-
-from PhysioMTL_solver.PhysioMTL import PhysioMTL
-
 import numpy as np
+import ot
 from matplotlib import pyplot as plt
 from matplotlib.lines import Line2D
-
 from mutar import GroupLasso, DirtyModel, MTW
-import ot
-import pickle
+
+from PhysioMTL_solver.PhysioMTL import PhysioMTL
+from PhysioMTL_solver.PhysioMTL_utils import get_rainbow_curves_new, process_for_PhysioMTL, get_rainbow_from_s, \
+    process_for_MTL, \
+    k_nearest_model_para, compute_list_rmse
 
 
 # Notice # scatter data samples
@@ -95,7 +92,6 @@ def get_DirtyModel_prediction():
 
 
 if __name__ == "__main__":
-
     # Notice: This is the underlying function that controls the curves
     def underlying_truth(s):
         A = 0.2 * s + 3.0
@@ -103,9 +99,9 @@ if __name__ == "__main__":
         M = 5 * s + 35
         return A, phi, M
 
+
     # Notice: generate data for training
     s_input_list = [1, 2, 3, 4, 5, 6]
-
 
     freq = 0.34
 
@@ -114,29 +110,31 @@ if __name__ == "__main__":
                                                                             underlying_func=underlying_truth)
     # Notice: Process data for PhysioMTL
     t_list, X_train_list, S_train_list, Y_train_list = process_for_PhysioMTL(raw_t_list=t_raw_list,
-                                                                          raw_x_list=X_raw_list,
-                                                                          raw_s_list=S_raw_list,
-                                                                          raw_y_list=Y_raw_list)
+                                                                             raw_x_list=X_raw_list,
+                                                                             raw_s_list=S_raw_list,
+                                                                             raw_y_list=Y_raw_list)
 
     # Notice: generate data for testing
     s_test_list = np.random.uniform(low=4, high=9.9, size=5).tolist()
 
     t_test_list_raw, X_test_raw_list, S_test_raw_list, Y_test_raw_list = get_rainbow_curves_new(s_test_list,
-                                                                            data_noise=0.5,
-                                                                            underlying_func=underlying_truth)
+                                                                                                data_noise=0.5,
+                                                                                                underlying_func=underlying_truth)
     # Notice: Process data for PhysioMTL
     t_test_list, X_test_list, S_test_list, Y_test_list_groundtruth = process_for_PhysioMTL(raw_t_list=t_test_list_raw,
-                                                                          raw_x_list=X_test_raw_list,
-                                                                          raw_s_list=S_test_raw_list,
-                                                                          raw_y_list=Y_test_raw_list)
+                                                                                           raw_x_list=X_test_raw_list,
+                                                                                           raw_s_list=S_test_raw_list,
+                                                                                           raw_y_list=Y_test_raw_list)
+
 
     # Notice: PhysioMTL
     def my_cost_function(x, y):
         return np.sqrt(np.mean(np.square(x - y)))
 
+
     PhysioMTL_model = PhysioMTL(alpha=0.1, T_initial=None,
-                          T_lr=9e-2, W_lr=1e-3, T_ite_num=100, W_ite_num=100,
-                          all_ite_num=50, map_type="linear", kernel_sigma=30)
+                                T_lr=9e-2, W_lr=1e-3, T_ite_num=100, W_ite_num=100,
+                                all_ite_num=50, map_type="linear", kernel_sigma=30)
     PhysioMTL_model.set_aux_feature_cost_function(my_cost_function)
 
     PhysioMTL_model.fit(X_list=X_train_list, Y_list=Y_train_list, S_list=S_train_list)
@@ -180,7 +178,7 @@ if __name__ == "__main__":
     plot_data_curve_with_s_qua(t_raw_list, pred_f_train_list, S_raw_list, rainbow_func=get_rainbow_from_s)
     colors_list_train = ["grey", "grey"]
     lines_list_train = [Line2D([0], [0], color="grey", linewidth=0, linestyle="solid", marker="o", markersize=10),
-                  Line2D([0], [0], color="grey", linewidth=3, linestyle="solid", marker="s", markersize=2)]
+                        Line2D([0], [0], color="grey", linewidth=3, linestyle="solid", marker="s", markersize=2)]
     labels_list_train = ["data", "regression"]
     plt.legend(lines_list_train, labels_list_train)
     plt.title("Training tasks")

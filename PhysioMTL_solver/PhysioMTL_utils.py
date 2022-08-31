@@ -2,23 +2,22 @@
 The utils functions for PhysioMTL
 Data generation, visualization and so on
 """
-import numpy as np
 import matplotlib.cm as cm
+import numpy as np
 from matplotlib import pyplot as plt
 
 
-def get_sin_data(M_str, A_str, phi_str, data_num, noise, t_raw):
+# def get_sin_data(M_str, A_str, phi_str, data_num, noise, t_raw):
+#     noise_raw = np.random.normal(loc=0, scale=noise, size=data_num)
+#     y_raw = M_str + A_str * np.sin(t_raw * 0.25 + phi_str) + noise_raw
+#
+#     return y_raw
 
-    noise_raw = np.random.normal(loc=0, scale=noise, size=data_num)
-    y_raw = M_str + A_str * np.sin(t_raw * 0.25 + phi_str) + noise_raw
-
-    return y_raw
 
 # [[t_i(np), f_i(np), s_i(np)],
 #  [t_i(np), f_i(np), s_i(np)],
 #  ....,]
 def get_rainbow_curves(s_list):
-
     all_data_list = []
     para_list = []
 
@@ -26,7 +25,7 @@ def get_rainbow_curves(s_list):
     for index, s in enumerate(s_list):
         t_i_raw = np.linspace(0, 25, 30) + np.random.normal(loc=0, scale=0.0, size=30)
         noise_i_raw = np.random.normal(loc=0, scale=noise_index, size=30)
-        temp_para = [35 + s*5, 3.0 + s/5, (0.34) + s * 0.000,  -1.8 + 0.4 * s]
+        temp_para = [35 + s * 5, 3.0 + s / 5, (0.34) + s * 0.000, -1.8 + 0.4 * s]
         print("temp_para =", temp_para)
         y_i_raw = temp_para[0] + temp_para[1] * np.sin(t_i_raw * temp_para[2] + temp_para[3]) + noise_i_raw
         all_data_list.append([t_i_raw, y_i_raw, s])
@@ -49,6 +48,7 @@ causual_map_default = np.array([[0.2, 3.0],
                                 [0.4, -1.8],
                                 [5, 35]])
 
+
 def underlying_truth(s):
     A = 0.2 * s + 3.0
     phi = 0.4 * s - 1.8
@@ -56,23 +56,23 @@ def underlying_truth(s):
     return A, phi, M
 
 
-def get_rainbow_curves_new(s_list_input, data_noise=0.1, underlying_func = underlying_truth):
-    t_list = []     # t index for plot
-    x_list = []     # X feature for regression
-    s_list = []     # task feature for regression
-    y_list = []     # Y label for regression
+def get_rainbow_curves_new(s_list_input, data_noise=0.1, underlying_func=underlying_truth):
+    t_list = []  # t index for plot
+    x_list = []  # X feature for regression
+    s_list = []  # task feature for regression
+    y_list = []  # Y label for regression
 
     freq = 0.34
     # Notice: generate data for each task
     for index, s in enumerate(s_list_input):
-        t_i_raw = np.linspace(0, 25, 30) + np.random.normal(loc=0, scale=0.1, size=30)    # (30,)
+        t_i_raw = np.linspace(0, 25, 30) + np.random.normal(loc=0, scale=0.1, size=30)  # (30,)
         A_task, phi_task, M_task = underlying_func(s)
         y_i_raw = M_task + A_task * np.sin(freq * t_i_raw + phi_task) \
                   + np.random.normal(loc=0, scale=data_noise, size=30)  # (30, )
 
-        x_i_raw = np.asarray([np.sin(freq * t_i_raw),       # (30, 3)
-                                np.cos(freq * t_i_raw),
-                                np.ones(30, )]).T
+        x_i_raw = np.asarray([np.sin(freq * t_i_raw),  # (30, 3)
+                              np.cos(freq * t_i_raw),
+                              np.ones(30, )]).T
 
         t_list.append(t_i_raw)
         x_list.append(x_i_raw)
@@ -89,7 +89,6 @@ def process_for_PhysioMTL(raw_t_list, raw_x_list, raw_s_list, raw_y_list):
     Y_train_list = []
 
     for task_i, s_value in enumerate(raw_s_list):
-
         # Notice: X_vec: (30, 3) -> (30, 3)
         X_train_list.append(raw_x_list[task_i])
         # Notice: Y_vec: (30, ) -> (30, 1)
@@ -108,7 +107,6 @@ def process_for_PhysioMTL(raw_t_list, raw_x_list, raw_s_list, raw_y_list):
 # Notice: process data for training other MTL
 #       https://github.com/hichamjanati/mutar
 def process_for_MTL(raw_t_list, raw_x_list, raw_s_list, raw_y_list):
-
     task_num = len(raw_t_list)
 
     X_mat = np.zeros((task_num, 30, 4))
@@ -137,7 +135,7 @@ def k_nearest_model_para(train_W, train_s_list, test_s_list, k=2):
         index_list = []
         for result in result_list:
             index_list.append(train_s_list.index(result))
-        weight_selected = train_W[:, index_list]    # (4, 2)
+        weight_selected = train_W[:, index_list]  # (4, 2)
         model_para_mat_list.append(weight_selected)
     return model_para_mat_list
 
@@ -162,7 +160,7 @@ l_np = np.linspace(0, 10, 101)
 
 
 def get_rainbow_from_s(s):
-    color_select = min(list(l_np), key= lambda x:abs(x - s))
+    color_select = min(list(l_np), key=lambda x: abs(x - s))
     color_index = list(l_np).index(color_select)
     return colors_f[color_index]
 
@@ -170,7 +168,8 @@ def get_rainbow_from_s(s):
 # Notice # scatter data samples
 def scatter_data_with_s(plt, t_list_raw, Y_raw_list, S_raw_list, rainbow_func=get_rainbow_from_s, **kwargs):
     for task_i, s_value in enumerate(S_raw_list):
-        plt.scatter(t_list_raw[task_i], Y_raw_list[task_i], label="task code:" + str(s_value), color=rainbow_func(s_value), **kwargs)
+        plt.scatter(t_list_raw[task_i], Y_raw_list[task_i], label="task code:" + str(s_value),
+                    color=rainbow_func(s_value), **kwargs)
         # plt.plot(t_test, pred_Y_list[task_i], label="pred" + str(s_value), color=get_rainbow_from_s(s_value))
     return plt
 
@@ -179,9 +178,5 @@ def scatter_data_with_s(plt, t_list_raw, Y_raw_list, S_raw_list, rainbow_func=ge
 def plot_data_curve_with_s(t_list_or_np, Y_list, S_raw_list, rainbow_func=get_rainbow_from_s, **kwargs):
     if isinstance(t_list_or_np, list):
         for task_i, s_value in enumerate(S_raw_list):
-            plt.plot(t_list_or_np[task_i], Y_list[task_i], label="pred" + str(s_value), color=rainbow_func(s_value), **kwargs)
-
-
-
-
-
+            plt.plot(t_list_or_np[task_i], Y_list[task_i], label="pred" + str(s_value), color=rainbow_func(s_value),
+                     **kwargs)

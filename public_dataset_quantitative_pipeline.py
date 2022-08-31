@@ -1,23 +1,19 @@
-from PhysioMTL_solver.PhysioMTL_utils import get_rainbow_curves, \
-    get_rainbow_curves_new, process_for_PhysioMTL, get_rainbow_from_s, process_for_MTL, \
-    scatter_data_with_s, plot_data_curve_with_s, k_nearest_model_para, compute_list_rmse
-
-from PhysioMTL_solver.PhysioMTL import PhysioMTL
-from utils_public_data import get_raw_list_from_public_data, process_for_PhysioMTL_pubdata, \
-                            investigate_all, divide_raw_train_test_list, process_for_MTL_pubdata, \
-                            k_nearest_model_para_pub, get_pred_Y_test_mtl, get_baseline_MTL_mse
+import pickle
 
 import numpy as np
-from matplotlib import pyplot as plt
-from matplotlib.lines import Line2D
-import pickle
-import random
-
 from mutar import GroupLasso, DirtyModel, MTW, IndLasso, MultiLevelLasso, ReMTW
+
+from PhysioMTL_solver.PhysioMTL import PhysioMTL
+from PhysioMTL_solver.PhysioMTL_utils import compute_list_rmse
+from utils_public_data import process_for_PhysioMTL_pubdata, \
+    divide_raw_train_test_list, process_for_MTL_pubdata, \
+    get_baseline_MTL_mse
 
 # Notice: The function to get raw data
 human_feq = 2.0 * np.pi / 24
 removed_subject_id_list = [4]
+
+
 def get_raw_list_from_public_data_custom(data_dict_input, removed_list=removed_subject_id_list):
     key_list = list(data_dict_input.keys())
     t_raw_list = []
@@ -65,7 +61,7 @@ if __name__ == "__main__":
 
     training_ratio = 0.6
 
-    test_alpha = 0.9    # Notice: For baseline
+    test_alpha = 0.9  # Notice: For baseline
 
     print("training_ratio = ", training_ratio, "  test_alpha = ", test_alpha)
 
@@ -95,22 +91,24 @@ if __name__ == "__main__":
             raw_s_list=raw_train_tuple[2],
             raw_y_list=raw_train_tuple[3])
         t_test_list, X_test_list, S_test_list, Y_test_list = process_for_PhysioMTL_pubdata(raw_t_list=raw_test_tuple[0],
-                                                                                        raw_x_list=raw_test_tuple[1],
-                                                                                        raw_s_list=raw_test_tuple[2],
-                                                                                        raw_y_list=raw_test_tuple[3])
+                                                                                           raw_x_list=raw_test_tuple[1],
+                                                                                           raw_s_list=raw_test_tuple[2],
+                                                                                           raw_y_list=raw_test_tuple[3])
 
         cost_weight_beta = np.array([1, 10.0, 1.0, 10, 1.0, 1.0, 0])
+
 
         def my_cost_function_pubdata(x_vec, y_vec):
             weighted_diff = np.dot(cost_weight_beta, x_vec - y_vec)
             return np.sqrt(np.mean(np.square(weighted_diff)))
 
+
         # Notice: PhysioMTL Linear
         PhysioMTL_model = PhysioMTL(alpha=0.1, T_initial=None,
-                              T_lr=1e-3, W_lr=1e-7,
-                              T_ite_num=200, W_ite_num=50,
-                              all_ite_num=50,
-                              verbose_T_grad=False)
+                                    T_lr=1e-3, W_lr=1e-7,
+                                    T_ite_num=200, W_ite_num=50,
+                                    all_ite_num=50,
+                                    verbose_T_grad=False)
 
         PhysioMTL_model.set_aux_feature_cost_function(my_cost_function_pubdata)
         PhysioMTL_model.fit(X_list=X_train_list, Y_list=Y_train_list, S_list=S_train_list)
@@ -119,19 +117,19 @@ if __name__ == "__main__":
 
         # Notice: PhysioMTL_kernel
         PhysioMTL_kernel_model = PhysioMTL(alpha=0.1, T_initial=None,
-                                     T_lr=9e-2, W_lr=1e-7,
-                                     T_ite_num=200, W_ite_num=50,
-                                     all_ite_num=50,
-                                     verbose_T_grad=False,
-                                     map_type="kernel", kernel_cost_function=my_cost_function_pubdata,
-                                     kernel_sigma=40)
+                                           T_lr=9e-2, W_lr=1e-7,
+                                           T_ite_num=200, W_ite_num=50,
+                                           all_ite_num=50,
+                                           verbose_T_grad=False,
+                                           map_type="kernel", kernel_cost_function=my_cost_function_pubdata,
+                                           kernel_sigma=40)
 
         PhysioMTL_kernel_model.set_aux_feature_cost_function(my_cost_function_pubdata)
         PhysioMTL_kernel_model.fit(X_list=X_train_list, Y_list=Y_train_list, S_list=S_train_list)
         pred_Y_kernel_test_list = PhysioMTL_kernel_model.predict(X_list=X_test_list, S_list=S_test_list)
         PhysioMTL_kernel_mse = compute_list_rmse(pred_Y_kernel_test_list, Y_test_list)
 
-        #Notice: baseline methods
+        # Notice: baseline methods
         X_train_mat, Y_train_mat = process_for_MTL_pubdata(raw_t_list=raw_train_tuple[0],
                                                            raw_x_list=raw_train_tuple[1],
                                                            raw_s_list=raw_train_tuple[2],
@@ -140,9 +138,11 @@ if __name__ == "__main__":
         # Define the kernel function for generalization test
         cost_weight_beta_mtl = np.array([1, 10.0, 1.0, 10, 1.0, 1.0])
 
+
         def my_cost_function_pubdata_pub(x_vec, y_vec):
             weighted_diff = np.dot(cost_weight_beta_mtl, x_vec - y_vec)
             return np.sqrt(np.mean(np.square(weighted_diff)))
+
 
         mtl_grouplasso = GroupLasso(alpha=test_alpha)
         grouplasso_mse = get_baseline_MTL_mse(mtl_grouplasso, X_train_mat, Y_train_mat, raw_train_tuple,
@@ -177,8 +177,8 @@ if __name__ == "__main__":
             mse = compute_list_rmse(mean_pred_list, raw_test_tuple[3])
             return mse
 
-        mean_mse = get_global_average_mse(X_train_mat, Y_train_mat, raw_train_tuple, raw_test_tuple)
 
+        mean_mse = get_global_average_mse(X_train_mat, Y_train_mat, raw_train_tuple, raw_test_tuple)
 
         print("PhysioMTL_kernel_mse =", PhysioMTL_kernel_mse)
         print("PhysioMTL_mse =", PhysioMTL_mse)
@@ -201,7 +201,6 @@ if __name__ == "__main__":
         remtw_mse_list.append(remtw_mse)
         mean_mse_list.append(mean_mse)
 
-
     # Notice: Done
     print()
     print("At the end of the day")
@@ -216,8 +215,6 @@ if __name__ == "__main__":
     print("dirty: mean = ", np.mean(dirty_mse_list), " std = ", np.std(dirty_mse_list))
     print("mtw: mean = ", np.mean(mtw_mse_list), " std = ", np.std(mtw_mse_list))
     print("remtw: mean = ", np.mean(remtw_mse_list), " std = ", np.std(remtw_mse_list))
-
-
 
     print("PhysioMTL: mean = ", np.mean(PhysioMTL_mse_list), " std = ", np.std(PhysioMTL_mse_list))
     print("PhysioMTL_kernel: mean = ", np.mean(PhysioMTL_kernel_mse_list), " std = ", np.std(PhysioMTL_kernel_mse_list))

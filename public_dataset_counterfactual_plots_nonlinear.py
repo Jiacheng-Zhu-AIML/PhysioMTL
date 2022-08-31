@@ -1,16 +1,14 @@
 """
 The quantitative results
 """
-from PhysioMTL_solver.PhysioMTL import PhysioMTL
-from utils_public_data import get_raw_list_from_public_data, process_for_PhysioMTL_pubdata, \
-                            investigate_all, divide_raw_train_test_list, process_for_MTL_pubdata, \
-                            k_nearest_model_para_pub, get_pred_Y_test_mtl, investigate_all_model, \
-                            investigate_all_model_save
+import pickle
 
 import numpy as np
 from matplotlib import pyplot as plt
-import pickle
 
+from PhysioMTL_solver.PhysioMTL import PhysioMTL
+from utils_public_data import process_for_PhysioMTL_pubdata, \
+    investigate_all_model_save
 
 if __name__ == "__main__":
     # First of all... read data
@@ -30,7 +28,8 @@ if __name__ == "__main__":
     """
     human_feq = 2.0 * np.pi / 24
     subject_id_list = []
-    removed_subject_id_list = [4,8]
+    removed_subject_id_list = [4, 8]
+
 
     def get_raw_list_from_public_data_custom(data_dict_input, removed_list=removed_subject_id_list):
         key_list = list(data_dict_input.keys())
@@ -69,9 +68,9 @@ if __name__ == "__main__":
         data_dict, removed_list=removed_subject_id_list)
 
     t_list, X_train_list, S_train_list, Y_train_list = process_for_PhysioMTL_pubdata(raw_t_list=t_raw_list,
-                                                                                  raw_x_list=X_raw_list,
-                                                                                  raw_s_list=S_raw_list,
-                                                                                  raw_y_list=Y_raw_list)
+                                                                                     raw_x_list=X_raw_list,
+                                                                                     raw_s_list=S_raw_list,
+                                                                                     raw_y_list=Y_raw_list)
 
     # Notice: define a cost metric
     """
@@ -94,12 +93,12 @@ if __name__ == "__main__":
     T_ini = None
 
     PhysioMTL_model = PhysioMTL(alpha=0.1, T_initial=T_ini,
-                          T_lr=9e-2, W_lr=1e-7,
-                          T_ite_num=200, W_ite_num=50,
-                          all_ite_num=50,
-                          verbose_T_grad=True,
-                          map_type="kernel", kernel_cost_function=my_cost_function_pubdata,
-                          kernel_sigma=10, T_grad_F_norm_threshold=1e-9)
+                                T_lr=9e-2, W_lr=1e-7,
+                                T_ite_num=200, W_ite_num=50,
+                                all_ite_num=50,
+                                verbose_T_grad=True,
+                                map_type="kernel", kernel_cost_function=my_cost_function_pubdata,
+                                kernel_sigma=10, T_grad_F_norm_threshold=1e-9)
 
     PhysioMTL_model.set_aux_feature_cost_function(my_cost_function_pubdata)
 
