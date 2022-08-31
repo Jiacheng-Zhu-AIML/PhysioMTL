@@ -1,9 +1,7 @@
+"""Solver class for PhysioMTL multitask regression model."""
 import numpy as np
-from matplotlib import pyplot as plt
-import matplotlib.cm as cm
 
 
-# Notice: Sinkhorn
 def sinkhorn_plan(cost_matrix, r, c, lam, epsilon=1e-5):
     """
     Computes the optimal transport matrix and Sinkhorn distance using the
@@ -18,12 +16,10 @@ def sinkhorn_plan(cost_matrix, r, c, lam, epsilon=1e-5):
         - P : optimal transport matrix (n x m)
         - dist : Sinkhorn distance
     """
-
     n, m = cost_matrix.shape
     P = np.exp(- lam * cost_matrix)
-    P /= P.sum()
+    P /= P.sum()  # normalize this matrix
     u = np.zeros(n)
-    # normalize this matrix
     while np.max(np.abs(u - P.sum(1))) > epsilon:
         u = P.sum(1)
         P *= (r / u).reshape((-1, 1))
@@ -31,8 +27,55 @@ def sinkhorn_plan(cost_matrix, r, c, lam, epsilon=1e-5):
     return P, np.sum(P * cost_matrix)
 
 
-# Notice: lovely MAP_MTL solver
 class PhysioMTL:
+    """
+    The base PhysioMTL solver class for multitask regression.
+
+    :parameter
+    -----------
+    alpha: float
+        Constant that multiplies the OT map resitmation term. Defaults to 0.1.
+    aux_feat_cost_func: function / lambda function
+        The distance metric of the task wise features. It is usually set as a
+        weighted l2 norm. It allows users to specify the similarity between
+        tasks.
+    X_data_list: [(n_samples, d_feature), ..., (n_samples, d_feature)],
+        list of t numpy.ndarrays, float
+        Training data.
+    Y_data_list: [(n_samples, 1), ..., (n_samples, 1)], list of
+        t numpy.ndarrays, float
+        Training target/label variable
+    S_data_list: [(d_task-wise_feature, 1), ..., (d_task-wise_feature, d_label)],
+        list of t numpy.ndarrays, float
+        The auxiliary task-wise feature vectors.
+    cost_mat: (t, t), numpy.ndarray, float
+        The similarity matrix between tasks. Defaults to None.
+    verbose_T_grad: bool, defaults to False
+        Whether to display transport map T and regressor W values in each iteration
+    map_type: str, {"linear", "kernel"}, default
+        Important! Select the type of the transport map
+    kernel_sigma: float, defaults to 1
+        The width parameter of the Gaussian RBF kernel. Be careful to choose the value
+    Pi: (t, t), numpy.ndarray, float
+        The optimal transport coupling. Defaults to None.
+    coef_: (d_feature, t), (d_feature, d_taskwise_feature), two numpy.ndarrays, float
+        self.W, self.T, The learned multitask parameters and the transport map.
+    T_lr: float, defaults to 1e-3.
+        The learning rate for updating the transport map.
+    W_lr: float, defaults to 1e-6.
+        The learning rate for updating the regressors.
+    T_ite_num: int, defaults to 50
+        The iteration number for updating the transport map T.
+    W_ite_num: int, defaults to 50
+        The iteration number for updating the regressor function weights.
+    T_grad_F_norm_threshold: float, defaults to 1e-6
+        The threshold that prevents gradient explosion when updating transport map T.
+    W_grad_F_norm_threshold: float, defaults to 1e-7
+        The threshold that prevents gradient explosion when updating regressors W.
+    all_ite_num: int, defaults to 50
+        The total iteration number of the algorithm.
+    """
+
     def __init__(self, alpha=0.1, T_initial=None,
                  T_lr=1e-3, W_lr=1e-6,
                  T_ite_num=50, W_ite_num=50,
@@ -47,11 +90,12 @@ class PhysioMTL:
         self.Y_data_list = None
         self.S_data_list = None
         self.cost_mat = None
+        self.verbose_T_grad = verbose_T_grad
+        self.map_type = map_type
+        self.kernel_sigma = kernel_sigma
         self.Pi = None
-        self.train_task_n = 0
+        self._train_task_n = 0
         self.T_initial = T_initial
-        self.lbd = 0.5
-        self.S_dim = None
         self.coef_ = None
         self.T_lr = T_lr
         self.W_lr = W_lr
@@ -60,38 +104,47 @@ class PhysioMTL:
         self.T_grad_F_norm_threshold = T_grad_F_norm_threshold
         self.W_grad_F_norm_threshold = W_grad_F_norm_threshold
         self.all_ite_num = all_ite_num
-        self.verbse_T_grad = verbose_T_grad
-        self.map_method = map_type
-        self.kernel_sigma = kernel_sigma
         if kernel_cost_function == None:
             print("Use l2 as kernel cost")
+
             def kernel_cost_l2(x, y):
                 return np.mean(np.square(x - y))
+
             self.kernel_cost = kernel_cost_l2
         else:
             self.kernel_cost = kernel_cost_function
             print("kernel cost defined")
 
-    # Notice: The cost function for auxiliary feature
     def set_aux_feature_cost_function(self, aux_feat_cost_func):
+        """
+        :param aux_feat_cost_func: A python function or Lambda function that computes
+        the similarity between taskwise features
+        :return: float
+        """
         self.aux_feat_cost_func = aux_feat_cost_func
 
     # Notice: Fit
     def fit(self, X_list, S_list, Y_list):
         """
-        :param X_list:
-        :param S_list:
-        :param Y_list:
-        :return:
+        X_data_list: [(n_samples, d_feature), ..., (n_samples, d_feature)],
+            list of t numpy.ndarrays, float
+            Training data.
+        Y_data_list: [(n_samples, 1), ..., (n_samples, 1)], list of
+            t numpy.ndarrays, float
+            Training target/label variable
+        S_data_list: [(d_task-wise_feature, 1), ..., (d_task-wise_feature, d_label)],
+            list of t numpy.ndarrays, float
+            The auxiliary task-wise feature vectors.
+        :return: None
         """
         self.X_data_list = X_list
         self.S_data_list = S_list
         self.Y_data_list = Y_list
 
         n_task = len(X_list)
-        self.train_task_n = n_task
+        self._train_task_n = n_task
 
-        if self.map_method not in ["linear", "kernel"]:
+        if self.map_type not in ["linear", "kernel"]:
             print("Wrong, set map='linear' or 'kernel'!")
             return 0
 
@@ -99,11 +152,11 @@ class PhysioMTL:
         W_list = []
 
         for i in range(n_task):
-            X_t = X_list[i].T   # (3, 30)
-            Y_t = Y_list[i].T   # (1, 30)
+            X_t = X_list[i].T  # (3, 30)
+            Y_t = Y_list[i].T  # (1, 30)
             W_est = Y_t @ X_t.T @ np.linalg.inv(X_t @ (X_t.T))  # (1, 3)
             W_list.append(W_est)
-        W_np = np.concatenate(W_list).T   # (w_dim=3, n_task)
+        W_np = np.concatenate(W_list).T  # (w_dim=3, n_task)
 
         # Notice: Step 2. Get the cost matrix from domain knowledge
         self.cost_mat = np.zeros((n_task, n_task))
@@ -113,9 +166,9 @@ class PhysioMTL:
                                                               self.S_data_list[j])
 
         # Notice: Step 2.5, Get K_S instead of S if using kernel map
-        if self.map_method == "linear":
+        if self.map_type == "linear":
             S_np = np.concatenate(S_list, axis=1)  # (s_dim, n_task)
-        elif self.map_method == "kernel":
+        elif self.map_type == "kernel":
             # First get a cost matrix (data_num, data_num)
             #  where each element is c(s_i, s_j)
             #  then get K_ij by exp(- c / r**2)
@@ -124,7 +177,7 @@ class PhysioMTL:
                 for j in range(n_task):
                     temp_cost_mat[i, j] = self.kernel_cost(self.S_data_list[i],
                                                            self.S_data_list[j])
-            K_mat = np.exp(- temp_cost_mat / (2 * self.kernel_sigma**2))
+            K_mat = np.exp(- temp_cost_mat / (2 * self.kernel_sigma ** 2))
             S_np = K_mat
 
         w_dim, w_task_num = W_np.shape
@@ -135,7 +188,7 @@ class PhysioMTL:
         # Notice: Step 3. Get the OT coupling via Sinkhorn
         v_dmy = u_dmy = np.ones(n_task) / n_task
         self.Pi, w_d = sinkhorn_plan(cost_matrix=self.cost_mat, r=v_dmy, c=u_dmy,
-                                lam=5, epsilon=1e-4)
+                                     lam=5, epsilon=1e-4)
 
         if self.T_initial is None:
             self.T_initial = np.zeros((w_dim, s_dim))
@@ -152,8 +205,8 @@ class PhysioMTL:
                 for i in range(n_task):
                     for j in range(n_task):
                         grad_T = grad_T - self.alpha * 2 * self.Pi[i, j] * \
-                                 (W_np[:, i:i+1] - T_gd @ S_np[:, j:j+1]) @ \
-                                 S_np[:, j:j+1].T
+                                 (W_np[:, i:i + 1] - T_gd @ S_np[:, j:j + 1]) @ \
+                                 S_np[:, j:j + 1].T
 
                 T_gd = T_gd - self.T_lr * grad_T
 
@@ -165,21 +218,21 @@ class PhysioMTL:
                     print("Early terminate for T at t_ite =", t_ite)
                     break
 
-
             # Notice: Fix T, update W
             W_grad_F_norm_last = 1e6
             for w_ite in range(self.W_ite_num):
-                grad_W = np.zeros_like(W_np)    # (3, 5)
+                grad_W = np.zeros_like(W_np)  # (3, 5)
 
-                for t_ite in range(n_task):   # Notice: Compute the w_grad oen by one
+                for t_ite in range(n_task):  # Notice: Compute the w_grad oen by one
 
-                    w_t_grad = (W_np[:, t_ite:t_ite+1].T @ X_list[t_ite].T - Y_list[t_ite].T) \
+                    w_t_grad = (W_np[:, t_ite:t_ite + 1].T @ X_list[t_ite].T - Y_list[t_ite].T) \
                                @ (X_list[t_ite])
 
                     # Notice: gradient with regard
                     for t_t_ite in range(n_task):
-                        w_t_grad = w_t_grad - self.alpha * (T_gd @ S_np[:, t_t_ite:t_t_ite+1] - W_np[:, t_t_ite:t_t_ite + 1]).T
-                    grad_W[:, t_ite:t_ite+1] = w_t_grad.T
+                        w_t_grad = w_t_grad - self.alpha * (
+                                T_gd @ S_np[:, t_t_ite:t_t_ite + 1] - W_np[:, t_t_ite:t_t_ite + 1]).T
+                    grad_W[:, t_ite:t_ite + 1] = w_t_grad.T
 
                 W_np = W_np - self.W_lr * grad_W
 
@@ -191,7 +244,7 @@ class PhysioMTL:
                     print("Early terminate for W at w_ite =", w_ite)
                     break
 
-            if self.verbse_T_grad:
+            if self.verbose_T_grad:
                 print()
                 print("i_ite =", i_ite)
                 print("last grad_T =", grad_T)
@@ -201,8 +254,19 @@ class PhysioMTL:
         self.T = T_gd
         self.coef_ = self.W, self.T
 
-    # Notice: Given all the feature samples, predict label
     def predict(self, X_list=None, S_list=None):
+        """
+        X_data_list: [(n_samples, d_feature), ..., (n_samples, d_feature)],
+            list of t numpy.ndarrays, float
+            Training data.
+        S_data_list: [(d_task-wise_feature, 1), ..., (d_task-wise_feature, d_label)],
+            list of t numpy.ndarrays, float
+            The auxiliary task-wise feature vectors.
+        :return:
+        Y_data_list: [(n_samples, 1), ..., (n_samples, 1)], list of
+            t numpy.ndarrays, float
+            Training target/label variable
+        """
         if (X_list is None) and (S_list is None):
             pred_Y_list = []
             for i, X_np in enumerate(self.X_data_list):
@@ -214,17 +278,17 @@ class PhysioMTL:
             pred_Y_list = []
             test_task_n = len(S_list)
             S_list_test = []
-            if self.map_method == "linear":
+            if self.map_type == "linear":
                 S_list_test = S_list
-            elif self.map_method == "kernel":
-                temp_cost_mat = np.zeros((self.train_task_n, test_task_n))
-                for i in range(self.train_task_n):
+            elif self.map_type == "kernel":
+                temp_cost_mat = np.zeros((self._train_task_n, test_task_n))
+                for i in range(self._train_task_n):
                     for j in range(test_task_n):
                         temp_cost_mat[i, j] = self.kernel_cost(self.S_data_list[i],
                                                                S_list[j])
                 K_mat = np.exp(- temp_cost_mat / (2 * self.kernel_sigma ** 2))
                 for j in range(test_task_n):
-                    S_list_test.append(K_mat[:, j:j+1])
+                    S_list_test.append(K_mat[:, j:j + 1])
 
             for i, X_np in enumerate(X_list):
                 W_pred = self.T @ S_list_test[i]
@@ -233,42 +297,3 @@ class PhysioMTL:
 
         return pred_Y_list
 
-
-#
-def multi_sin_featurization(data_list, freq=0.375):
-    X_np_list = []
-    Y_np_list = []
-    S_np_list = []
-    for data_t in data_list:
-        t_raw_t = data_t[0]
-        data_num_t = t_raw_t.shape[0]
-        X_vct_t = np.asarray([np.sin(freq * t_raw_t),
-                              np.cos(freq * t_raw_t),
-                              np.ones(data_num_t, )]).T
-        X_np_list.append(X_vct_t)
-        Y_np_list.append(data_t[1].reshape((-1, 1)))
-
-        S_vct = np.ones((2, 1))
-        S_vct[0, 0] = data_t[2]
-        S_np_list.append(S_vct)
-
-    return X_np_list, Y_np_list, S_np_list
-
-
-def obtain_original_para(linear_para_np):
-    cos_para_np = np.zeros_like(linear_para_np)
-    A_vct = np.sqrt(np.square(linear_para_np[0:1, :]) + np.square(linear_para_np[1:2, :]))
-    print("A_vct =", A_vct)
-    # cos_para_np[]
-
-
-    return
-
-
-# Notice: Visualize the task relation by rainbow color
-colors_f = cm.rainbow(0.1 * np.linspace(0, 10, 101))
-l_np = np.linspace(0, 10, 101)
-def get_rainbow_from_s(s):
-    color_select = min(list(l_np), key= lambda x:abs(x - s))
-    color_index = list(l_np).index(color_select)
-    return colors_f[color_index]
