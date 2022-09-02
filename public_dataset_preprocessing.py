@@ -1,12 +1,26 @@
+"""
+Process the MMASH public dataset. Computer, filter, and denoise the Heart Rate
+Variability (HRV) data and save them as a pickle file.
+
+The Multilevel Monitoring of Activity and Sleep in Healthy People (MMASH) dataset is
+publicly available at:
+https://physionet.org/content/mmash/1.0.0/
+https://github.com/RossiAlessio/MMASH
+
+"""
+import pickle
+
 import numpy as np
 import pandas as pd
-from scipy import stats
 from matplotlib import pyplot as plt
-import pickle
+from scipy import stats
 
 
 # Assign datatime object to raw data
 def assign_pd_time(x_1, x_2):
+    """
+    Assign datatime object to raw data
+    """
     day = x_1
     time_str = x_2
     if day == 1:
@@ -20,7 +34,11 @@ def assign_pd_time(x_1, x_2):
 
 # Use the rmssd as the HRV value
 def get_subject_hrv_rmssd_pd(rr_pd_raw_input):
-    #
+    """
+    Compute the HRV value with R-R interval from the raw data.
+    :param rr_pd_raw_input: pandas.Dataframe
+    :return: pandas.Dataframe
+    """
     rr_pd = rr_pd_raw_input.copy()
 
     del rr_pd['Unnamed: 0']  # delete the first column
@@ -58,6 +76,9 @@ def get_subject_hrv_rmssd_pd(rr_pd_raw_input):
 
 # functional for lambda
 def get_time_delta_hour(x):
+    """
+    The function for pandas lambda method, covert datatime into seconds.
+    """
     t_d = (x - pd.Timestamp("2020-08-01 00:00:00"))
     hour_sec = t_d.seconds / 3600
     hour_day = t_d.days * 24
@@ -66,19 +87,30 @@ def get_time_delta_hour(x):
 
 # sleep data
 def get_subject_sleep_hour(sleep_pd):
+    """
+    Read the time from the sleep data.
+    """
     return sleep_pd["Total Minutes in Bed"].sum() / 60.0
 
 
 def assign_pd_time_activity(start, end):
+    """
+    Assign the datetime.
+    """
     return pd.to_timedelta(end + ":00") - pd.to_timedelta(start + ":00")
 
 
 def get_activity_value(activity_pd_input):
+    """
+    Compute the total time of activity in a day.
+    :param activity_pd_input: Pandas.dataframe
+    :return: float.
+    """
     activity_pd = activity_pd_input.copy().dropna()
     del activity_pd["Unnamed: 0"]
     activity_pd["time_start_pd"] = activity_pd.apply(lambda x: assign_pd_time_activity(x["Start"], x["End"]), axis=1)
     activity_pd["time_end_pd"] = activity_pd.apply(lambda x: assign_pd_time_activity(x["Start"], x["End"]), axis=1)
-    activity_pd["time_last_hour"] = activity_pd["time_end_pd"].apply(lambda x : x.seconds / 3600)
+    activity_pd["time_last_hour"] = activity_pd["time_end_pd"].apply(lambda x: x.seconds / 3600)
     activity_pd_345 = activity_pd.loc[activity_pd["Activity"].isin([4, 5])]
     if activity_pd_345.empty:
         return 0
@@ -129,7 +161,6 @@ if __name__ == "__main__":
         subject_hrv_pd = subject_hrv_pd[~subject_hrv_pd.index.isin(low_noise_df.index)]
         z_score_msk = (np.abs(stats.zscore(subject_hrv_pd["value"])) < 2.5)
         subject_hrv_pd = subject_hrv_pd.loc[z_score_msk]
-
 
         subject_hrv_pd = subject_hrv_pd.loc[subject_hrv_pd["value"] > 12]
         subject_hrv_pd["t_hour"] = subject_hrv_pd["time_pd"].apply(lambda x: get_time_delta_hour(x))
