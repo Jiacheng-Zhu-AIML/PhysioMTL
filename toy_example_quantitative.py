@@ -1,3 +1,8 @@
+"""
+Generate a synthetic sinusoidal dataset.
+Run PhysioMTL and mutar multitask regression baselines on the synthetic dataset.
+Visualize the prediction results and the generalization error on the test set.
+"""
 import numpy as np
 import ot
 from matplotlib import pyplot as plt

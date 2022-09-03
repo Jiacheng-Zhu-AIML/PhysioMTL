@@ -1,3 +1,8 @@
+"""
+Generate a synthetic sinusoidal dataset.
+Run PhysioMTL and mutar multitask regression baselines on the synthetic dataset.
+Compare the test error RMSE in a cross-validation fashion.
+"""
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.lines import Line2D
@@ -13,7 +18,6 @@ from PhysioMTL_solver.PhysioMTL_utils import get_rainbow_curves_new, process_for
 def scatter_data_with_s_qua(plt, t_list_raw, Y_raw_list, S_raw_list, rainbow_func=get_rainbow_from_s, **kwargs):
     for task_i, s_value in enumerate(S_raw_list):
         plt.scatter(t_list_raw[task_i], Y_raw_list[task_i], color=rainbow_func(s_value), **kwargs)
-        # plt.plot(t_test, pred_Y_list[task_i], label="pred" + str(s_value), color=get_rainbow_from_s(s_value))
     return plt
 
 
@@ -32,7 +36,6 @@ def get_GroupLasso_prediction():
     # Notice # Notice # MTL! # Notice # Notice
     gl = GroupLasso(alpha=0.9)
     gl.fit(X_train_mat, Y_train_mat)  #
-    coef = gl.coef_  # Notice: (w_dim = 4, task_num)
 
     Y_pred = gl.predict(X_train_mat)
 
@@ -54,7 +57,6 @@ def get_MTW_prediction():
     # Notice # Notice # MTL! # Notice # Notice
     gl = MTW(alpha=0.9)
     gl.fit(X_train_mat, Y_train_mat)  #
-    coef = gl.coef_  # Notice: (w_dim = 4, task_num)
 
     Y_pred = gl.predict(X_train_mat)
 
@@ -75,7 +77,6 @@ def get_DirtyModel_prediction():
 
     gl = DirtyModel(alpha=0.9)
     gl.fit(X_train_mat, Y_train_mat)  #
-    coef = gl.coef_  # Notice: (w_dim = 4, task_num)
 
     Y_pred = gl.predict(X_train_mat)
 
@@ -90,12 +91,8 @@ def get_DirtyModel_prediction():
 
 
 if __name__ == "__main__":
-    print()
-
-
     # Notice, generate data
-
-    # Notice: This is the underlying function that decides the curves
+    #   This is the underlying function that decides the curves
     def underlying_truth(s):
         A = 0.2 * s + 3.0
         phi = 0.4 * s - 1.8
