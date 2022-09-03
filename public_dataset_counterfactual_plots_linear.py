@@ -1,5 +1,6 @@
 """
-The quantitative results
+Run PhysioMTL on the processed MMASH dataset.
+Produce the counterfactual analysis
 """
 import pickle
 
@@ -11,8 +12,7 @@ from utils_public_data import process_for_PhysioMTL_pubdata, \
     investigate_all_model_save_linear
 
 if __name__ == "__main__":
-    # First of all... read data
-
+    # Notice: First of all... read data
     pkl_file_name = "data_and_pickle/public_data_for_MTL.pkl"
 
     file_open = open(pkl_file_name, "rb")
@@ -20,9 +20,10 @@ if __name__ == "__main__":
     file_open.close()
 
     """
-    Draw a good-looking trend.
-    remove the outliers and do the learning
-    "4": ridiculously high, just remove
+    remove the outliers 
+    "4": ridiculously high, just remove.
+    "8": age=40, stress>70, but has very good HRV. 
+         Could be an athlete.
     """
     human_feq = 2.0 * np.pi / 24
     subject_id_list = []
@@ -44,7 +45,7 @@ if __name__ == "__main__":
                                 np.cos(human_feq * t_np),
                                 np.ones(sample_num, )]).T
 
-            # Notice: Naive imputation methods
+            # Notice: Do simple imputation.
             if key == 18:  # user_18 don't have age data
                 s_vec[0] = 16
             if key == 11:  # User_11 does not have sleep data
@@ -56,7 +57,6 @@ if __name__ == "__main__":
             X_raw_list.append(x_raw)
             S_raw_list.append(s_vec)
             Y_raw_list.append(y_np)
-            # break
             subject_id_list.append(key)
         return t_raw_list, X_raw_list, S_raw_list, Y_raw_list, subject_id_list
 
@@ -71,15 +71,6 @@ if __name__ == "__main__":
                                                                                      raw_y_list=Y_raw_list)
 
     # Notice: define a cost metric
-    """
-    s_vec_base = np.array([[ 25.        ], # Age
-                       [1.80        ], # Height (m)
-                       [ 75.        ], # weight (kg)
-                       [  1.0], # Activity (h)
-                       [  9.       ], # Sleep (h)
-                       [ 20.        ], # Stress (1)
-                       [  1.        ]]).reshape(-1, 1)
-    """
     cost_weight_beta = np.array([1, 10.0, 1.0, 10, 1.0, 1.0, 0])
 
 
@@ -102,6 +93,15 @@ if __name__ == "__main__":
 
     PhysioMTL_model.fit(X_list=X_train_list, Y_list=Y_train_list, S_list=S_train_list)
 
+    """
+    s_vec_base = np.array([[ 25.        ], # Age
+                       [1.80        ], # Height (m)
+                       [ 75.        ], # weight (kg)
+                       [  1.0], # Activity (h)
+                       [  9.       ], # Sleep (h)
+                       [ 20.        ], # Stress (1)
+                       [  1.        ]]).reshape(-1, 1)
+    """
     s_vec_base = np.array([[23.],  # Age
                            [1.80],  # Height (m)
                            [85.],  # weight (kg)
