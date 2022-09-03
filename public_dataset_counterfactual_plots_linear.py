@@ -1,6 +1,6 @@
 """
 Run PhysioMTL on the processed MMASH dataset.
-Produce the counterfactual analysis
+Produce the counterfactual analysis.
 """
 import pickle
 
@@ -73,7 +73,7 @@ if __name__ == "__main__":
     # Notice: define a cost metric
     cost_weight_beta = np.array([1, 10.0, 1.0, 10, 1.0, 1.0, 0])
 
-
+    # Notice: Define the cost function here
     def my_cost_function_pubdata(x_vec, y_vec):
         weighted_diff = np.dot(cost_weight_beta, x_vec - y_vec)
         return np.sqrt(np.mean(np.square(weighted_diff)))
