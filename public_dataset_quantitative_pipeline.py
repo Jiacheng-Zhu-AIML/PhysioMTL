@@ -1,3 +1,8 @@
+"""
+Run PhysioMTL on the processed MMASH dataset.
+Compare the PhysioMTL method with other baselines quantitatively
+in cross-validation fashion.
+"""
 import pickle
 
 import numpy as np
@@ -15,6 +20,10 @@ removed_subject_id_list = [4]
 
 
 def get_raw_list_from_public_data_custom(data_dict_input, removed_list=removed_subject_id_list):
+    """
+    Convert the preprocessed MMASH data for multitask regression models.
+    Remove outliers and do imputation.
+    """
     key_list = list(data_dict_input.keys())
     t_raw_list = []
     X_raw_list = []
@@ -42,7 +51,7 @@ def get_raw_list_from_public_data_custom(data_dict_input, removed_list=removed_s
         X_raw_list.append(x_raw)
         S_raw_list.append(s_vec)
         Y_raw_list.append(y_np)
-        # break
+
         subject_id_list.append(key)
     return t_raw_list, X_raw_list, S_raw_list, Y_raw_list, subject_id_list
 

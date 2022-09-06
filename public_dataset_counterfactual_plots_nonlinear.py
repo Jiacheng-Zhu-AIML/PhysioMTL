@@ -31,6 +31,10 @@ if __name__ == "__main__":
 
 
     def get_raw_list_from_public_data_custom(data_dict_input, removed_list=removed_subject_id_list):
+        """
+        Convert the preprocessed MMASH data for multitask regression models.
+        Remove outliers and do imputation.
+        """
         key_list = list(data_dict_input.keys())
         t_raw_list = []
         X_raw_list = []

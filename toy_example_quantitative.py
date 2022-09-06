@@ -15,30 +15,36 @@ from PhysioMTL_solver.PhysioMTL_utils import get_rainbow_curves_new, process_for
     k_nearest_model_para, compute_list_rmse
 
 
-# Notice # scatter data samples
 def scatter_data_with_s_qua(plt, t_list_raw, Y_raw_list, S_raw_list, rainbow_func=get_rainbow_from_s, **kwargs):
+    """
+    For visualization purpose, scatter data samples.
+    """
     for task_i, s_value in enumerate(S_raw_list):
         plt.scatter(t_list_raw[task_i], Y_raw_list[task_i], color=rainbow_func(s_value), **kwargs)
-        # plt.plot(t_test, pred_Y_list[task_i], label="pred" + str(s_value), color=get_rainbow_from_s(s_value))
     return plt
 
 
-# Notice # plot
 def plot_data_curve_with_s_qua(t_list_or_np, Y_list, S_raw_list, rainbow_func=get_rainbow_from_s, **kwargs):
+    """
+    For visualization purpose, plot data samples in different color according to
+    the taskwise features.
+    """
     if isinstance(t_list_or_np, list):
         for task_i, s_value in enumerate(S_raw_list):
             plt.plot(t_list_or_np[task_i], Y_list[task_i], color=rainbow_func(s_value), **kwargs)
 
 
 def get_GroupLasso_prediction():
+    """
+    The baseline method, train a mutar.GroupLasso model and make prediction on the test set.
+    """
     # Notice: Process data for normal MTL
     X_train_mat, Y_train_mat = process_for_MTL(raw_t_list=t_raw_list, raw_x_list=X_raw_list,
                                                raw_s_list=S_raw_list, raw_y_list=Y_raw_list)
 
     # Notice # Notice # MTL! # Notice # Notice
     gl = GroupLasso(alpha=0.9)
-    gl.fit(X_train_mat, Y_train_mat)  #
-    coef = gl.coef_  # Notice: (w_dim = 4, task_num)
+    gl.fit(X_train_mat, Y_train_mat)
 
     Y_pred = gl.predict(X_train_mat)
 
@@ -53,6 +59,11 @@ def get_GroupLasso_prediction():
 
 
 def get_MTW_prediction():
+    """
+    The baseline method, train a mutar.MTW model (Multi-task Wasserstein [1]) and
+    make prediction on the test set.
+    [1] Wasserstein regularization for sparse multi-task regression, Janati et al., AISTATS 2019.
+    """
     # # Notice: Process data for normal MTL
     X_train_mat, Y_train_mat = process_for_MTL(raw_t_list=t_raw_list, raw_x_list=X_raw_list,
                                                raw_s_list=S_raw_list, raw_y_list=Y_raw_list)
@@ -60,7 +71,6 @@ def get_MTW_prediction():
     # Notice # Notice # MTL! # Notice # Notice
     gl = MTW(alpha=0.9)
     gl.fit(X_train_mat, Y_train_mat)  #
-    coef = gl.coef_  # Notice: (w_dim = 4, task_num)
 
     Y_pred = gl.predict(X_train_mat)
 
@@ -75,6 +85,9 @@ def get_MTW_prediction():
 
 
 def get_DirtyModel_prediction():
+    """
+    The baseline method, train a mutar.DirtyModel model and make prediction on the test set.
+    """
     # # Notice: Process data for normal MTL
     X_train_mat, Y_train_mat = process_for_MTL(raw_t_list=t_raw_list, raw_x_list=X_raw_list,
                                                raw_s_list=S_raw_list, raw_y_list=Y_raw_list)
@@ -82,7 +95,6 @@ def get_DirtyModel_prediction():
     # Notice # Notice # MTL! # Notice # Notice
     gl = DirtyModel(alpha=0.99)
     gl.fit(X_train_mat, Y_train_mat)  #
-    coef = gl.coef_  # Notice: (w_dim = 4, task_num)
 
     Y_pred = gl.predict(X_train_mat)
 
