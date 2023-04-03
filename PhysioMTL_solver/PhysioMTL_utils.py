@@ -7,10 +7,14 @@ import numpy as np
 
 
 def underlying_truth(s):
-    """ The underlying procedure that generates function values
-    give a taskwise feature.
-    :param s: float, the task indicator
-    :return: The amplitude A, phase phi, and the vertical shift M.
+    """
+    The underlying procedure that generates function values give a taskwise feature.
+
+    Args:
+        s (float): The task indicator.
+
+    Returns:
+        tuple: A tuple containing the amplitude A, phase phi, and the vertical shift M.
     """
     A = 0.2 * s + 3.0
     phi = 0.4 * s - 1.8
@@ -20,14 +24,19 @@ def underlying_truth(s):
 
 def get_rainbow_curves_new(s_list_input, data_noise=0.1, underlying_func=underlying_truth):
     """
-    Generate the dataset for regression
-    :param s_list_input: list of , A list of taskwise features
-    :param data_noise: float, defaults to 0.1. The noise for data generation.
-    :param underlying_func: python function. The underlying sinusoidal function.
-    :return: A list of t for each task, for plotting.
-             A list of feature X for each task, for multitask regression.
-             A list of task indicator s for each task, for multitask regression.
-             A list of target X for each task, for multitask regression.
+    Generate the dataset for regression.
+
+    Args:
+        s_list_input (list): A list of taskwise features.
+        data_noise (float, optional): The noise for data generation. Defaults to 0.1.
+        underlying_func (function, optional): The underlying sinusoidal function. Defaults to underlying_truth.
+
+    Returns:
+        tuple: A tuple containing the following four lists:
+               - A list of t for each task, for plotting.
+               - A list of feature X for each task, for multitask regression.
+               - A list of task indicator s for each task, for multitask regression.
+               - A list of target X for each task, for multitask regression.
     """
     t_list = []  # t index for plot
     x_list = []  # X feature for regression
@@ -54,15 +63,22 @@ def get_rainbow_curves_new(s_list_input, data_noise=0.1, underlying_func=underly
     return t_list, x_list, s_list, y_list
 
 
-# Notice: Process data for training PhysioMTL
 def process_for_PhysioMTL(raw_t_list, raw_x_list, raw_s_list, raw_y_list):
-    """
-    Reshape the data for PhysioMTL solver. Reparamterize the taskwise indicators as
-    taskwise features.
-    :return: A list of t for each task, for plotting.
-             A list of feature X for each task, for multitask regression.
-             A list of taskwise feature S for each task, for multitask regression.
-             A list of target X for each task, for multitask regression.
+   """
+    Reshape the data for training PhysioMTL solver.
+
+    Args:
+        raw_t_list (list): A list of t for each task, for plotting.
+        raw_x_list (list): A list of feature X for each task, for multitask regression.
+        raw_s_list (list): A list of taskwise features S for each task, for multitask regression.
+        raw_y_list (list): A list of target X for each task, for multitask regression.
+
+    Returns:
+        tuple: A tuple containing the following four lists:
+               - A list of t for each task, for plotting.
+               - A list of feature X for each task, for multitask regression.
+               - A list of taskwise feature S for each task, for multitask regression.
+               - A list of target X for each task, for multitask regression.
     """
     X_train_list = []
     S_train_list = []
@@ -83,13 +99,21 @@ def process_for_PhysioMTL(raw_t_list, raw_x_list, raw_s_list, raw_y_list):
     return raw_t_list, X_train_list, S_train_list, Y_train_list
 
 
-# Notice: process data for training other MTL
-#       https://github.com/hichamjanati/mutar
 def process_for_MTL(raw_t_list, raw_x_list, raw_s_list, raw_y_list):
     """
-    Transform the PhysioMTL data into the format for other multitask regressions methods.
-    Combine the taskwise feature into the input feature X.
-    :return: X_mat, Y_mat
+    Transform the data into the format for other multitask regression methods.
+    https://github.com/hichamjanati/mutar
+
+    Args:
+        raw_t_list (list): A list of t for each task, for plotting.
+        raw_x_list (list): A list of feature X for each task, for multitask regression.
+        raw_s_list (list): A list of taskwise features S for each task, for multitask regression.
+        raw_y_list (list): A list of target X for each task, for multitask regression.
+
+    Returns:
+        tuple: A tuple containing the following two arrays:
+               - An array of X_mat for multitask regression.
+               - An array of Y_mat for multitask regression.
     """
     task_num = len(raw_t_list)
 
@@ -104,28 +128,34 @@ def process_for_MTL(raw_t_list, raw_x_list, raw_s_list, raw_y_list):
     return X_mat, Y_mat
 
 
-# Notice: k_nearest for normal MTL generalization
 def k_nearest_list(value, list_input, k):
     """
-    Given a target value, return top k nearest elements in a list.
-    :param value: float, a target value.
-    :param list_input: list, a list of values.
-    :param k: The number of top k elements.
-    :return: list of values.
+    Given a target value, return the top k nearest elements in a list.
+
+    Args:
+        value (float): A target value.
+        list_input (list): A list of values.
+        k (int): The number of top k elements.
+
+    Returns:
+        list: A list of the top k nearest elements.
     """
     ans = [n for d, n in sorted((abs(x - value), x) for x in list_input)[:k]]
     return ans
 
 
-# Notice: get the model parameter mat
 def k_nearest_model_para(train_W, train_s_list, test_s_list, k=2):
     """
-    Use the taskwise indicators to find the k nearest parameters.
-    :param train_W: The learned weight matrix from the training set (feature_d, train_task_num)
-    :param train_s_list: The list of task indicators for the training set.
-    :param test_s_list:The list of task indicators for the testing set.
-    :param k: The number of top k elements.
-    :return: (feature_d, test_task_num)
+    Find the k nearest parameters based on the taskwise indicators.
+
+    Args:
+        train_W (ndarray): The learned weight matrix from the training set with shape (feature_d, train_task_num).
+        train_s_list (list): A list of task indicators for the training set.
+        test_s_list (list): A list of task indicators for the testing set.
+        k (int, optional): The number of top k elements. Defaults to 2.
+
+    Returns:
+        list: A list of model parameter matrices with shape (feature_d, k) for each task in the testing set.
     """
     model_para_mat_list = []
     for s_test in test_s_list:
@@ -133,18 +163,21 @@ def k_nearest_model_para(train_W, train_s_list, test_s_list, k=2):
         index_list = []
         for result in result_list:
             index_list.append(train_s_list.index(result))
-        weight_selected = train_W[:, index_list]  # (4, 2)
+        weight_selected = train_W[:, index_list]  # (feature_d, k)
         model_para_mat_list.append(weight_selected)
     return model_para_mat_list
 
 
-# Notice: get the RMSE error of two list of np
 def compute_list_rmse(list_a, list_b):
     """
-    Compute the average RMSE error given to list of numpy.ndarrays.
-    :param list_a: List of ndarrays
-    :param list_b: List of ndarrays
-    :return: float
+    Compute the average RMSE error given two lists of numpy.ndarrays.
+
+    Args:
+        list_a (list): A list of ndarrays.
+        list_b (list): A list of ndarrays.
+
+    Returns:
+        float: The average RMSE error.
     """
     if len(list_a) != len(list_b):
         print("Something is wrong")
@@ -158,12 +191,15 @@ def compute_list_rmse(list_a, list_b):
     return rmse / num_task
 
 
-# Notice: Visualize the task relation by rainbow color
 def get_rainbow_from_s(s):
     """
     Get the color coefficient from taskwise indicators.
-    :param s: float
-    :return: numpy.ndarray from cm.rainbow()
+
+    Args:
+        s (float): A taskwise indicator.
+
+    Returns:
+        ndarray: An ndarray from cm.rainbow().
     """
     colors_f = cm.rainbow(0.1 * np.linspace(0, 10, 101))
     l_np = np.linspace(0, 10, 101)
