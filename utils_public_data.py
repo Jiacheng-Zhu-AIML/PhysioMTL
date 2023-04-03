@@ -11,8 +11,21 @@ from matplotlib.lines import Line2D
 human_feq = 2.0 * np.pi / 24    # The frequency factor for human diurnal cycle.
 
 
-# Notice: get the RMSE error of two list of np
 def compute_list_rmse(list_a, list_b):
+    """
+    Computes the root mean squared error (RMSE) between two lists of numpy arrays.
+
+    Args:
+        list_a (list): A list of numpy arrays.
+        list_b (list): A list of numpy arrays with the same length as list_a.
+
+    Returns:
+        float: The RMSE between the two lists of numpy arrays.
+
+    Raises:
+        ValueError: If the two input lists have different lengths.
+
+    """
     if len(list_a) != len(list_b):
         print("Something is wrong")
     num_task = len(list_a)
@@ -26,16 +39,19 @@ def compute_list_rmse(list_a, list_b):
 
 def get_baseline_MTL_mse(baseline_model_obj, X_train_mat, Y_train_mat, raw_train_tuple, raw_test_tuple, cost_function):
     """
-    Train a baseline multitask regression model and evaluate the RMSE loss on the test set.
-    :param baseline_model_obj: Python object, Multitask learning model. See Mutar package for details.
-    :param X_train_mat: Training feature, obtained from process_for_MTL_pubdata().
-    :param Y_train_mat: Training target/label, obtained from process_for_MTL_pubdata().
-    :param raw_train_tuple: Training feature, target, and taskwise features, obtained
-                            from divide_raw_train_test_list().
-    :param raw_test_tuple:  Test feature, target, and taskwise features, obtained
-                            from divide_raw_train_test_list().
-    :param cost_function:   The cost metric to compute the similarity between tasks.
-    :return: The average RMSE on the test set.
+    Trains a baseline multitask regression model and evaluates the root mean squared error (RMSE) on the test set.
+
+    Args:
+        baseline_model_obj (object): Python object representing the multitask learning model.
+        X_train_mat (numpy.ndarray): Training feature matrix obtained from `process_for_MTL_pubdata()`.
+        Y_train_mat (numpy.ndarray): Training target/label matrix obtained from `process_for_MTL_pubdata()`.
+        raw_train_tuple (tuple): Tuple of training feature, target, and task-wise feature matrices obtained from `divide_raw_train_test_list()`.
+        raw_test_tuple (tuple): Tuple of test feature, target, and task-wise feature matrices obtained from `divide_raw_train_test_list()`.
+        cost_function (function): The cost metric used to compute the similarity between tasks.
+
+    Returns:
+        float: The average RMSE on the test set.
+
     """
     baseline_model_obj.fit(X_train_mat, Y_train_mat)
     prior_mean = np.median(Y_train_mat)
@@ -65,11 +81,20 @@ def get_pred_Y_test_mtl(model_para_list, x_raw_test_list, s_raw_test_list, prior
     return Y_pred_list
 
 
-# Notice: get the model parameter mat
 def k_nearest_model_para_pub(train_W, train_s_list, test_s_list, my_cost_function, k=1):
     """
-    Use the taskwise indicators to find the k nearest parameters, on public dataset. Used
-    in get_baseline_MTL_mse().
+    Finds the k nearest parameters using the task-wise indicators on a public dataset.
+
+    Args:
+        train_W (numpy.ndarray): Matrix of shape (d_feature, t), representing the learned feature weights of the model.
+        train_s_list (list): List of t numpy ndarrays of shape (d_task-wise-feature, d_label), representing the task-wise feature vectors for the training set.
+        test_s_list (list): List of t numpy ndarrays of shape (d_task-wise-feature, d_label), representing the task-wise feature vectors for the test set.
+        my_cost_function (function): The cost function used to compute the similarity between task-wise features.
+        k (int): The number of nearest neighbors to select. Defaults to 1.
+
+    Returns:
+        list: List of t numpy ndarrays of shape (d_feature, k), representing the selected weight matrices for each task in the test set.
+
     """
     model_para_mat_list = []
     for s_test in test_s_list:
@@ -80,15 +105,24 @@ def k_nearest_model_para_pub(train_W, train_s_list, test_s_list, my_cost_functio
                 if np.max(train_s_vec - result) < 1e-6:
                     index_list.append(idx)
                     break
-        weight_selected = train_W[:, index_list]  # (4, 2)
+        weight_selected = train_W[:, index_list]  # (d_feature, k)
         model_para_mat_list.append(weight_selected)
     return model_para_mat_list
 
 
 def k_nearest_list_pub(value, list_input, k, my_cost_function):
     """
-    Given a target value, return top k nearest elements in a list, according to a
-    user specified cost function. Used only in k_nearest_model_para_pub().
+    Finds the top k nearest elements in a list to a target value, according to a user-specified cost function.
+
+    Args:
+        value (numpy.ndarray): The target value to compare against.
+        list_input (list): The list of elements to compare against the target value.
+        k (int): The number of nearest neighbors to select.
+        my_cost_function (function): The cost function used to compute the similarity between the elements.
+
+    Returns:
+        list: The top k nearest elements in the list to the target value.
+
     """
     ans = [n for d, n in sorted((my_cost_function(x, value), x) for x in list_input)[:k]]
     return ans
@@ -96,9 +130,19 @@ def k_nearest_list_pub(value, list_input, k, my_cost_function):
 
 def process_for_MTL_pubdata(raw_t_list, raw_x_list, raw_s_list, raw_y_list):
     """
-    Transform the raw data into the format for other multitask regressions methods.
-    Combine the taskwise feature into the input feature X. For experiments ran on the public
-    real-world dataset.
+    Transforms raw data into the format required by other multitask regression methods.
+
+    Args:
+        raw_t_list (list): List of task IDs.
+        raw_x_list (list): List of numpy ndarrays, each representing the feature matrix for a given task.
+        raw_s_list (list): List of numpy ndarrays, each representing the task-wise feature vectors for a given task.
+        raw_y_list (list): List of numpy ndarrays, each representing the target/label variable for a given task.
+
+    Returns:
+        tuple: A tuple containing:
+            - X_mat (numpy.ndarray): A tensor of shape (t, 100, d_feature), representing the combined feature matrix for all tasks, where t is the number of tasks and d_feature is the total number of features after task-wise features have been combined.
+            - Y_mat (numpy.ndarray): A matrix of shape (t, 100), representing the target/label variable matrix for all tasks, where t is the number of tasks.
+
     """
     task_num = len(raw_t_list)
     X_mat = np.zeros((task_num, 100, 3 + 6))
@@ -122,11 +166,18 @@ def process_for_MTL_pubdata(raw_t_list, raw_x_list, raw_s_list, raw_y_list):
 
 def divide_raw_train_test_list(t_raw_list_input, X_raw_list_input, S_raw_list_input, Y_raw_list_input, tr_ratio=0.8):
     """
-    Randomly divide the raw data into training and test set. The raw_list_input variables are list of
-    numpy.ndarrays obtained from get_raw_list_from_public_data_custom().
-    :param tr_ratio:    The ratio of training / test split.
-    :return:    Two tuples, each contains for numpy.ndarraies which are time indices, features,
-                taskwise features, and targets.
+    Randomly divides raw data into training and test sets.
+
+    Args:
+        t_raw_list_input (list): List of numpy ndarrays representing the time indices for each task.
+        X_raw_list_input (list): List of numpy ndarrays, each representing the feature matrix for a given task.
+        S_raw_list_input (list): List of numpy ndarrays, each representing the task-wise feature vectors for a given task.
+        Y_raw_list_input (list): List of numpy ndarrays, each representing the target/label variable for a given task.
+        tr_ratio (float, optional): The ratio of training to test split. Defaults to 0.8.
+
+    Returns:
+        tuple: A tuple containing two tuples, each of which contains four numpy ndarrays representing the time indices, feature matrices, task-wise feature vectors, and target/label variables for the training and test sets.
+
     """
     data_num = len(t_raw_list_input)
     index_list = list(range(0, data_num))
@@ -150,12 +201,21 @@ def divide_raw_train_test_list(t_raw_list_input, X_raw_list_input, S_raw_list_in
     return tXSY_train, tXSY_test
 
 
-# Notice: just
 def process_for_PhysioMTL_pubdata(raw_t_list, raw_x_list, raw_s_list, raw_y_list):
     """
-    Transform the raw data into the format for PhysioMTL methods.
-    Combine the taskwise feature into the input feature X. For experiments ran on the public
-    real-world dataset.
+    Transforms the raw data into the format for PhysioMTL methods.
+
+    Combines the task-wise features into the input feature X for experiments run on the public real-world dataset.
+
+    Args:
+        raw_t_list (list): List of numpy ndarrays representing the time indices for each task.
+        raw_x_list (list): List of numpy ndarrays, each representing the feature matrix for a given task.
+        raw_s_list (list): List of numpy ndarrays, each representing the task-wise feature vectors for a given task.
+        raw_y_list (list): List of numpy ndarrays, each representing the target/label variable for a given task.
+
+    Returns:
+        tuple: A tuple containing four numpy ndarrays representing the time indices, feature matrices, task-wise feature vectors, and target/label variables for each task in the format required by PhysioMTL methods.
+
     """
     X_train_list = []
     S_train_list = []
@@ -174,6 +234,15 @@ def process_for_PhysioMTL_pubdata(raw_t_list, raw_x_list, raw_s_list, raw_y_list
 
 
 def change_labels(ax):
+    """
+    Changes the labels and limits of a matplotlib plot.
+
+    Args:
+        ax: The axis object to modify.
+
+    Returns:
+        None.
+    """
     ax.legend(loc="lower right", fontsize=14)
 
     # Notice: 61, 89 for kernel map
@@ -194,8 +263,12 @@ def change_labels(ax):
 def investigate_all_model_save(model, s_vec_base):
     """
     Do the counterfactual analysis, plot and save the results.
-    :param model: The PhysioMTL solver with nonlinear map.
-    :param s_vec_base: The baseline taskwise demographic feature.
+    Args:
+        model: The PhysioMTL solver with nonlinear map.
+        s_vec_base: The baseline taskwise demographic feature.
+
+    Returns:
+        None
     """
     t_test = np.linspace(8, 36, 30)
     X_test = np.asarray([np.sin(human_feq * t_test),
@@ -316,8 +389,12 @@ def investigate_all_model_save(model, s_vec_base):
 def investigate_all_model_save_linear(model, s_vec_base):
     """
     Do the counterfactual analysis, plot and save the results.
-    :param model: The PhysioMTL solver with nonlinear map.
-    :param s_vec_base: The baseline taskwise demographic feature.
+    Args:
+        model: The PhysioMTL solver with nonlinear map.
+        s_vec_base: The baseline taskwise demographic feature.
+
+    Returns:
+        None
     """
     t_test = np.linspace(8, 36, 30)
     X_test = np.asarray([np.sin(human_feq * t_test),
