@@ -4,17 +4,17 @@ import numpy as np
 
 def sinkhorn_plan(cost_matrix, r, c, lam, epsilon=1e-5):
     """
-    Computes the optimal transport matrix and Sinkhorn distance using the
-    Sinkhorn-Knopp algorithm
-    Inputs:
-        - M : cost matrix (n x m)
-        - r : vector of marginals (n, )
-        - c : vector of marginals (m, )
-        - lam : strength of the entropic regularization
-        - epsilon : convergence parameter
-    Output:
-        - P : optimal transport matrix (n x m)
-        - dist : Sinkhorn distance
+    Computes the optimal transport matrix and Sinkhorn distance using the Sinkhorn-Knopp algorithm.
+
+    Args:
+        cost_matrix (ndarray): Cost matrix with shape (n x m).
+        r (ndarray): Vector of marginals with shape (n, ).
+        c (ndarray): Vector of marginals with shape (m, ).
+        lam (float): Strength of the entropic regularization.
+        epsilon (float, optional): Convergence parameter. Defaults to 1e-5.
+
+    Returns:
+        tuple: A tuple containing the optimal transport matrix with shape (n x m) and the Sinkhorn distance.
     """
     n, m = cost_matrix.shape
     P = np.exp(- lam * cost_matrix)
@@ -31,49 +31,30 @@ class PhysioMTL:
     """
     The base PhysioMTL solver class for multitask regression.
 
-    :parameter
-    -----------
-    alpha: float
-        Constant that multiplies the OT map resitmation term. Defaults to 0.1.
-    aux_feat_cost_func: function / lambda function
-        The distance metric of the task wise features. It is usually set as a
-        weighted l2 norm. It allows users to specify the similarity between
-        tasks.
-    X_data_list: [(n_samples, d_feature), ..., (n_samples, d_feature)],
-        list of t numpy.ndarrays, float
-        Training data.
-    Y_data_list: [(n_samples, 1), ..., (n_samples, 1)], list of
-        t numpy.ndarrays, float
-        Training target/label variable
-    S_data_list: [(d_task-wise_feature, 1), ..., (d_task-wise_feature, d_label)],
-        list of t numpy.ndarrays, float
-        The auxiliary task-wise feature vectors.
-    cost_mat: (t, t), numpy.ndarray, float
-        The similarity matrix between tasks. Defaults to None.
-    verbose_T_grad: bool, defaults to False
-        Whether to display transport map T and regressor W values in each iteration
-    map_type: str, {"linear", "kernel"}, default
-        Important! Select the type of the transport map
-    kernel_sigma: float, defaults to 1
-        The width parameter of the Gaussian RBF kernel. Be careful to choose the value
-    Pi: (t, t), numpy.ndarray, float
-        The optimal transport coupling. Defaults to None.
-    coef_: (d_feature, t), (d_feature, d_taskwise_feature), two numpy.ndarrays, float
-        self.W, self.T, The learned multitask parameters and the transport map.
-    T_lr: float, defaults to 1e-3.
-        The learning rate for updating the transport map.
-    W_lr: float, defaults to 1e-6.
-        The learning rate for updating the regressors.
-    T_ite_num: int, defaults to 50
-        The iteration number for updating the transport map T.
-    W_ite_num: int, defaults to 50
-        The iteration number for updating the regressor function weights.
-    T_grad_F_norm_threshold: float, defaults to 1e-6
-        The threshold that prevents gradient explosion when updating transport map T.
-    W_grad_F_norm_threshold: float, defaults to 1e-7
-        The threshold that prevents gradient explosion when updating regressors W.
-    all_ite_num: int, defaults to 50
-        The total iteration number of the algorithm.
+    Args:
+        alpha (float): Constant that multiplies the OT map resitmation term. Defaults to 0.1.
+        aux_feat_cost_func (function/lambda function): The distance metric of the task wise features.
+            It is usually set as a weighted l2 norm. It allows users to specify the similarity between tasks.
+        X_data_list (list): List of t numpy.ndarrays, each with shape (n_samples, d_feature), float. Training data.
+        Y_data_list (list): List of t numpy.ndarrays, each with shape (n_samples, 1), float. Training target/label variable.
+        S_data_list (list): List of t numpy.ndarrays, each with shape (d_task-wise_feature, 1), float.
+            The auxiliary task-wise feature vectors.
+        cost_mat (numpy.ndarray, float, optional): The similarity matrix between tasks. Defaults to None.
+        verbose_T_grad (bool, optional): Whether to display transport map T and regressor W values in each iteration.
+            Defaults to False.
+        map_type (str, optional): The type of the transport map. Must be one of {"linear", "kernel"}. Defaults to "linear".
+        kernel_sigma (float, optional): The width parameter of the Gaussian RBF kernel. Defaults to 1.
+        Pi (numpy.ndarray, float, optional): The optimal transport coupling. Defaults to None.
+        coef_ (tuple of numpy.ndarray, float): self.W, self.T, The learned multitask parameters and the transport map.
+        T_lr (float, optional): The learning rate for updating the transport map. Defaults to 1e-3.
+        W_lr (float, optional): The learning rate for updating the regressors. Defaults to 1e-6.
+        T_ite_num (int, optional): The iteration number for updating the transport map T. Defaults to 50.
+        W_ite_num (int, optional): The iteration number for updating the regressor function weights. Defaults to 50.
+        T_grad_F_norm_threshold (float, optional): The threshold that prevents gradient explosion when updating transport
+            map T. Defaults to 1e-6.
+        W_grad_F_norm_threshold (float, optional): The threshold that prevents gradient explosion when updating regressors
+            W. Defaults to 1e-7.
+        all_ite_num (int, optional): The total iteration number of the algorithm. Defaults to 50.
     """
 
     def __init__(self, alpha=0.1, T_initial=None,
@@ -117,25 +98,29 @@ class PhysioMTL:
 
     def set_aux_feature_cost_function(self, aux_feat_cost_func):
         """
-        :param aux_feat_cost_func: A python function or Lambda function that computes
-        the similarity between taskwise features
-        :return: float
+        Sets the auxiliary feature cost function used for computing the similarity between taskwise features.
+
+        Args:
+            aux_feat_cost_func (function): A Python function or lambda function that computes the similarity between taskwise features.
+
+        Returns:
+            float: The result of setting the auxiliary feature cost function.
+
         """
         self.aux_feat_cost_func = aux_feat_cost_func
 
     # Notice: Fit
     def fit(self, X_list, S_list, Y_list):
-        """
-        X_data_list: [(n_samples, d_feature), ..., (n_samples, d_feature)],
-            list of t numpy.ndarrays, float
-            Training data.
-        Y_data_list: [(n_samples, 1), ..., (n_samples, 1)], list of
-            t numpy.ndarrays, float
-            Training target/label variable
-        S_data_list: [(d_task-wise_feature, 1), ..., (d_task-wise_feature, d_label)],
-            list of t numpy.ndarrays, float
-            The auxiliary task-wise feature vectors.
-        :return: None
+        """Fits the model using the given training data and auxiliary task-wise features.
+
+        Args:
+            X_list (list): List of t numpy ndarrays of shape (n_samples, d_feature), representing the training data.
+            S_list (list): List of t numpy ndarrays of shape (d_task-wise_feature, d_label), representing the auxiliary task-wise feature vectors.
+            Y_list (list): List of t numpy ndarrays of shape (n_samples, 1), representing the training target/label variable.
+
+        Returns:
+            None: This method does not return any values.
+
         """
         self.X_data_list = X_list
         self.S_data_list = S_list
@@ -255,17 +240,15 @@ class PhysioMTL:
         self.coef_ = self.W, self.T
 
     def predict(self, X_list=None, S_list=None):
-        """
-        X_data_list: [(n_samples, d_feature), ..., (n_samples, d_feature)],
-            list of t numpy.ndarrays, float
-            Training data.
-        S_data_list: [(d_task-wise_feature, 1), ..., (d_task-wise_feature, d_label)],
-            list of t numpy.ndarrays, float
-            The auxiliary task-wise feature vectors.
-        :return:
-        Y_data_list: [(n_samples, 1), ..., (n_samples, 1)], list of
-            t numpy.ndarrays, float
-            Training target/label variable
+        """Predicts the target/label variable using the trained model and given input data.
+
+        Args:
+            X_list (list): List of t numpy ndarrays of shape (n_samples, d_feature), representing the input data. Defaults to None.
+            S_list (list): List of t numpy ndarrays of shape (d_task-wise_feature, d_label), representing the auxiliary task-wise feature vectors. Defaults to None.
+
+        Returns:
+            list: List of t numpy ndarrays of shape (n_samples, 1), representing the predicted target/label variable.
+
         """
         if (X_list is None) and (S_list is None):
             pred_Y_list = []
