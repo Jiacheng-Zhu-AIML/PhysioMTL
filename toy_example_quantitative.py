@@ -11,45 +11,27 @@ from mutar import GroupLasso, DirtyModel, MTW
 
 from PhysioMTL_solver.PhysioMTL import PhysioMTL
 from PhysioMTL_solver.PhysioMTL_utils import get_rainbow_curves_new, process_for_PhysioMTL, get_rainbow_from_s, \
-    process_for_MTL, \
-    k_nearest_model_para, compute_list_rmse
-
-
-def scatter_data_with_s_qua(plt, t_list_raw, Y_raw_list, S_raw_list, rainbow_func=get_rainbow_from_s, **kwargs):
-    """
-    For visualization purpose, scatter data samples.
-    """
-    for task_i, s_value in enumerate(S_raw_list):
-        plt.scatter(t_list_raw[task_i], Y_raw_list[task_i], color=rainbow_func(s_value), **kwargs)
-    return plt
-
-
-def plot_data_curve_with_s_qua(t_list_or_np, Y_list, S_raw_list, rainbow_func=get_rainbow_from_s, **kwargs):
-    """
-    For visualization purpose, plot data samples in different color according to
-    the taskwise features.
-    """
-    if isinstance(t_list_or_np, list):
-        for task_i, s_value in enumerate(S_raw_list):
-            plt.plot(t_list_or_np[task_i], Y_list[task_i], color=rainbow_func(s_value), **kwargs)
+    process_for_MTL, k_nearest_model_para, scatter_data_with_s_qua, plot_data_curve_with_s_qua, compute_list_rmse
 
 
 def get_GroupLasso_prediction():
     """
-    The baseline method, train a mutar.GroupLasso model and make prediction on the test set.
+    Trains a mutar.GroupLasso model and makes predictions on the test set.
+
+    Returns:
+        list: A list of predicted outputs for the test set.
     """
-    # Notice: Process data for normal MTL
+    # Process data for normal MTL
     X_train_mat, Y_train_mat = process_for_MTL(raw_t_list=t_raw_list, raw_x_list=X_raw_list,
                                                raw_s_list=S_raw_list, raw_y_list=Y_raw_list)
 
-    # Notice # Notice # MTL! # Notice # Notice
+    # Do the MTL training
     gl = GroupLasso(alpha=0.9)
     gl.fit(X_train_mat, Y_train_mat)
 
     Y_pred = gl.predict(X_train_mat)
 
-    # Notice: For whatever normal MTL method:
-    #   Use K-NN to select the similar task and obtain the coef
+    #  Use K-NN to select the similar task and obtain the coef
     pred_list_knn = k_nearest_model_para(Y_pred.T, s_input_list, s_test_list, k=2)
     Y_test_pred = []
     for pred in pred_list_knn:
@@ -60,22 +42,23 @@ def get_GroupLasso_prediction():
 
 def get_MTW_prediction():
     """
-    The baseline method, train a mutar.MTW model (Multi-task Wasserstein [1]) and
-    make prediction on the test set.
+    Trains a mutar.MTW model (Multi-task Wasserstein [1]) and makes predictions on the test set.
     [1] Wasserstein regularization for sparse multi-task regression, Janati et al., AISTATS 2019.
+
+    Returns:
+        list: A list of predicted outputs for the test set.
     """
-    # # Notice: Process data for normal MTL
+    # Process data for normal MTL
     X_train_mat, Y_train_mat = process_for_MTL(raw_t_list=t_raw_list, raw_x_list=X_raw_list,
                                                raw_s_list=S_raw_list, raw_y_list=Y_raw_list)
 
-    # Notice # Notice # MTL! # Notice # Notice
+    # Do the MTL training
     gl = MTW(alpha=0.9)
-    gl.fit(X_train_mat, Y_train_mat)  #
+    gl.fit(X_train_mat, Y_train_mat)
 
     Y_pred = gl.predict(X_train_mat)
 
-    # Notice: For whatever normal MTL method:
-    #   Use K-NN to select the similar task and obtain the coef
+    #  Use K-NN to select the similar task and obtain the coef
     pred_list_knn = k_nearest_model_para(Y_pred.T, s_input_list, s_test_list, k=2)
     Y_test_pred = []
     for pred in pred_list_knn:
@@ -86,20 +69,22 @@ def get_MTW_prediction():
 
 def get_DirtyModel_prediction():
     """
-    The baseline method, train a mutar.DirtyModel model and make prediction on the test set.
+    Trains a mutar.DirtyModel model and makes predictions on the test set.
+
+    Returns:
+        list: A list of predicted outputs for the test set.
     """
     # # Notice: Process data for normal MTL
     X_train_mat, Y_train_mat = process_for_MTL(raw_t_list=t_raw_list, raw_x_list=X_raw_list,
                                                raw_s_list=S_raw_list, raw_y_list=Y_raw_list)
 
-    # Notice # Notice # MTL! # Notice # Notice
+    # Do the MTL training
     gl = DirtyModel(alpha=0.99)
-    gl.fit(X_train_mat, Y_train_mat)  #
+    gl.fit(X_train_mat, Y_train_mat)
 
     Y_pred = gl.predict(X_train_mat)
 
-    # Notice: For whatever normal MTL method:
-    #   Use K-NN to select the similar task and obtain the coef
+    #  Use K-NN to select the similar task and obtain the coef
     pred_list_knn = k_nearest_model_para(Y_pred.T, s_input_list, s_test_list, k=2)
     Y_test_pred = []
     for pred in pred_list_knn:
@@ -202,8 +187,7 @@ if __name__ == "__main__":
     plt.xlim(-2, 26)
     plt.ylim(30, 100)
 
-    # Notice: Generalization
-    # Notice: step 1, plot the test data
+    # Notice: Test the generalization and plot the test data
     fig_test = plt.figure(233, figsize=(8, 6))
     scatter_data_with_s_qua(plt, t_test_list_raw, Y_test_raw_list, S_test_raw_list,
                             rainbow_func=get_rainbow_from_s, alpha=0.4, s=60)
