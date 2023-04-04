@@ -3,6 +3,7 @@ The utils functions for PhysioMTL solver and computation.
 Synthetic data generation, data processing, and visualization.
 """
 import matplotlib.cm as cm
+from matplotlib import pyplot as plt
 import numpy as np
 
 
@@ -64,7 +65,7 @@ def get_rainbow_curves_new(s_list_input, data_noise=0.1, underlying_func=underly
 
 
 def process_for_PhysioMTL(raw_t_list, raw_x_list, raw_s_list, raw_y_list):
-   """
+    """
     Reshape the data for training PhysioMTL solver.
 
     Args:
@@ -75,10 +76,10 @@ def process_for_PhysioMTL(raw_t_list, raw_x_list, raw_s_list, raw_y_list):
 
     Returns:
         tuple: A tuple containing the following four lists:
-               - A list of t for each task, for plotting.
-               - A list of feature X for each task, for multitask regression.
-               - A list of taskwise feature S for each task, for multitask regression.
-               - A list of target X for each task, for multitask regression.
+                - A list of t for each task, for plotting.
+                - A list of feature X for each task, for multitask regression.
+                - A list of taskwise feature S for each task, for multitask regression.
+                - A list of target X for each task, for multitask regression.
     """
     X_train_list = []
     S_train_list = []
@@ -91,9 +92,9 @@ def process_for_PhysioMTL(raw_t_list, raw_x_list, raw_s_list, raw_y_list):
         Y_train_list.append(raw_y_list[task_i].reshape((-1, 1)))
         # Notice:! S:    number -> [s, sin(s), cos(s), 1].T  (4, 1)
         S_vec = np.array([[s_value],
-                          [np.sin(s_value)],
-                          [np.cos(s_value)],
-                          [1]])
+                            [np.sin(s_value)],
+                            [np.cos(s_value)],
+                            [1]])
         S_train_list.append(S_vec)
 
     return raw_t_list, X_train_list, S_train_list, Y_train_list
@@ -206,3 +207,44 @@ def get_rainbow_from_s(s):
     color_select = min(list(l_np), key=lambda x: abs(x - s))
     color_index = list(l_np).index(color_select)
     return colors_f[color_index]
+
+
+def scatter_data_with_s_qua(plt, t_list_raw, Y_raw_list, S_raw_list, rainbow_func=get_rainbow_from_s, **kwargs):
+    """
+    Scatter plots the data samples with color-coded task-wise features.
+
+    Args:
+        plt (matplotlib.pyplot object): A matplotlib.pyplot object to plot on.
+        t_list_raw (list): A list of numpy arrays representing the time indices of each task.
+        Y_raw_list (list): A list of numpy arrays representing the targets/labels of each task.
+        S_raw_list (list): A list of numpy arrays representing the task-wise features of each task.
+        rainbow_func (function, optional): A function that returns a color map based on the task-wise features.
+                                            Default is get_rainbow_from_s.
+        **kwargs: Additional arguments to pass to the scatter plot function.
+
+    Returns:
+        plt (matplotlib.pyplot object): A matplotlib.pyplot object with the scatter plot plotted on.
+    """
+    for task_i, s_value in enumerate(S_raw_list):
+        plt.scatter(t_list_raw[task_i], Y_raw_list[task_i], color=rainbow_func(s_value), **kwargs)
+    return plt
+
+
+def plot_data_curve_with_s_qua(t_list_or_np, Y_list, S_raw_list, rainbow_func=get_rainbow_from_s, **kwargs):
+    """
+    Plots the data curves with color-coded task-wise features.
+
+    Args:
+        t_list_or_np (list or numpy array): A list of numpy arrays or a numpy array representing the time indices of each task.
+        Y_list (list): A list of numpy arrays representing the targets/labels of each task.
+        S_raw_list (list): A list of numpy arrays representing the task-wise features of each task.
+        rainbow_func (function, optional): A function that returns a color map based on the task-wise features.
+                                            Default is get_rainbow_from_s.
+        **kwargs: Additional arguments to pass to the plot function.
+
+    Returns:
+        plt (matplotlib.pyplot object): A matplotlib.pyplot object with the scatter plot plotted on.
+    """
+    if isinstance(t_list_or_np, list):
+        for task_i, s_value in enumerate(S_raw_list):
+            plt.plot(t_list_or_np[task_i], Y_list[task_i], color=rainbow_func(s_value), **kwargs)
