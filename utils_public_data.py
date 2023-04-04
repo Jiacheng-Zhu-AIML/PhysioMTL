@@ -511,3 +511,48 @@ def investigate_all_model_save_linear(model, s_vec_base):
     plt.legend(lines_list, labels_list, loc="lower right", fontsize=14)
     plt.tight_layout(pad=tight_pad)
     fig.savefig('data_and_pickle/figures/MMASH_linear_2_baseline.png', dpi=500, bbox_inches='tight')
+
+
+def get_raw_list_from_public_data_custom(data_dict_input, removed_list):
+    """
+    Converts the preprocessed MMASH data for multitask regression models.
+
+    Args:
+        data_dict_input (dict): A dictionary containing the preprocessed MMASH data.
+        removed_list (list, optional): A list of subject IDs to be removed.
+
+    Returns:
+        tuple: A tuple containing the lists of time indices, input features, task-wise features, targets, and subject IDs.
+    """
+    human_feq = 2.0 * np.pi / 24
+    
+    key_list = list(data_dict_input.keys())
+    t_raw_list = []
+    X_raw_list = []
+    S_raw_list = []
+    Y_raw_list = []
+    subject_id_list = []
+    for key in key_list:
+        if key in removed_list:
+            continue
+        t_np, y_np, s_vec = data_dict_input[key]
+        sample_num = t_np.shape[0]
+        x_raw = np.asarray([np.sin(human_feq * t_np),
+                            np.cos(human_feq * t_np),
+                            np.ones(sample_num, )]).T
+
+        # Naive imputation methods
+        if key == 18:  # user_18 don't have age data
+            s_vec[0] = 22
+        if key == 11:  # User_11 does not have sleep data
+            s_vec[4] = 6.5  # I use the average
+        if key == 3:
+            s_vec[5] = 60
+
+        t_raw_list.append(t_np)
+        X_raw_list.append(x_raw)
+        S_raw_list.append(s_vec)
+        Y_raw_list.append(y_np)
+
+        subject_id_list.append(key)
+    return t_raw_list, X_raw_list, S_raw_list, Y_raw_list, subject_id_list

@@ -9,7 +9,7 @@ from matplotlib import pyplot as plt
 
 from PhysioMTL_solver.PhysioMTL import PhysioMTL
 from utils_public_data import process_for_PhysioMTL_pubdata, \
-    investigate_all_model_save
+    investigate_all_model_save,  get_raw_list_from_public_data_custom
 
 if __name__ == "__main__":
     # Notice: First of all... read data
@@ -29,46 +29,9 @@ if __name__ == "__main__":
     subject_id_list = []
     removed_subject_id_list = [4, 8]
 
-
-    def get_raw_list_from_public_data_custom(data_dict_input, removed_list=removed_subject_id_list):
-        """
-        Convert the preprocessed MMASH data for multitask regression models.
-        Remove outliers and do imputation.
-        """
-        key_list = list(data_dict_input.keys())
-        t_raw_list = []
-        X_raw_list = []
-        S_raw_list = []
-        Y_raw_list = []
-        for key in key_list:
-            if key in removed_list:
-                continue
-            t_np, y_np, s_vec = data_dict_input[key]
-            sample_num = t_np.shape[0]
-            x_raw = np.asarray([np.sin(human_feq * t_np),
-                                np.cos(human_feq * t_np),
-                                np.ones(sample_num, )]).T
-
-            # Notice: Naive imputation methods
-            if key == 18:  # user_18 don't have age data
-                s_vec[0] = 22
-            if key == 11:  # User_11 does not have sleep data
-                s_vec[4] = 6.0  # I use the average
-            if key == 3:
-                s_vec[5] = 60
-
-            t_raw_list.append(t_np)
-            X_raw_list.append(x_raw)
-            S_raw_list.append(s_vec)
-            Y_raw_list.append(y_np)
-            # break
-            subject_id_list.append(key)
-        return t_raw_list, X_raw_list, S_raw_list, Y_raw_list, subject_id_list
-
-
     # Notice: process data
     t_raw_list, X_raw_list, S_raw_list, Y_raw_list, subject_id_test_list = get_raw_list_from_public_data_custom(
-        data_dict, removed_list=removed_subject_id_list)
+        data_dict, removed_subject_id_list)
 
     t_list, X_train_list, S_train_list, Y_train_list = process_for_PhysioMTL_pubdata(raw_t_list=t_raw_list,
                                                                                      raw_x_list=X_raw_list,
