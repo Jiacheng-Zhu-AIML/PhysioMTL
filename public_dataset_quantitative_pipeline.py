@@ -21,8 +21,14 @@ removed_subject_id_list = [4]
 
 def get_raw_list_from_public_data_custom(data_dict_input, removed_list=removed_subject_id_list):
     """
-    Convert the preprocessed MMASH data for multitask regression models.
-    Remove outliers and do imputation.
+    Converts the preprocessed MMASH data for multitask regression models.
+
+    Args:
+        data_dict_input (dict): A dictionary containing the preprocessed MMASH data.
+        removed_list (list, optional): A list of subject IDs to be removed. Default is removed_subject_id_list.
+
+    Returns:
+        tuple: A tuple containing the lists of time indices, input features, task-wise features, targets, and subject IDs.
     """
     key_list = list(data_dict_input.keys())
     t_raw_list = []
@@ -31,7 +37,7 @@ def get_raw_list_from_public_data_custom(data_dict_input, removed_list=removed_s
     Y_raw_list = []
     subject_id_list = []
     for key in key_list:
-        if key in removed_list:  # 2: non-pattern, 10, 11, non-pattern?
+        if key in removed_list:
             continue
         t_np, y_np, s_vec = data_dict_input[key]
         sample_num = t_np.shape[0]
@@ -39,7 +45,7 @@ def get_raw_list_from_public_data_custom(data_dict_input, removed_list=removed_s
                             np.cos(human_feq * t_np),
                             np.ones(sample_num, )]).T
 
-        # Notice: Naive imputation methods
+        # Naive imputation methods
         if key == 18:  # user_18 don't have age data
             s_vec[0] = 22
         if key == 11:  # User_11 does not have sleep data
