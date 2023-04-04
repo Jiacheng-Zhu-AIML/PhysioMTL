@@ -17,12 +17,16 @@ from scipy import stats
 
 
 # Assign datatime object to raw data
-def assign_pd_time(x_1, x_2):
+def assign_pd_time(day, time_str):
+    """Assigns datetime object to raw data.
+
+    Args:
+        day (int): The day index.
+        time_str (str): The time string.
+
+    Returns:
+        datetime: A datetime object.
     """
-    Assign datatime object to raw data
-    """
-    day = x_1
-    time_str = x_2
     if day == 1:
         date_str = "2020-08-01 " + str(time_str)
     elif day == 2:
@@ -32,12 +36,14 @@ def assign_pd_time(x_1, x_2):
     return pd.to_datetime(date_str)
 
 
-# Use the rmssd as the HRV value
 def get_subject_hrv_rmssd_pd(rr_pd_raw_input):
-    """
-    Compute the HRV value with R-R interval from the raw data.
-    :param rr_pd_raw_input: pandas.Dataframe
-    :return: pandas.Dataframe
+    """Computes the HRV value with R-R interval from the raw data.
+
+    Args:
+        rr_pd_raw_input (pandas.DataFrame): A pandas dataframe containing the R-R interval data.
+
+    Returns:
+        pandas.DataFrame: A pandas dataframe containing the computed HRV values.
     """
     rr_pd = rr_pd_raw_input.copy()
 
@@ -74,10 +80,15 @@ def get_subject_hrv_rmssd_pd(rr_pd_raw_input):
     return hrv_df
 
 
-# functional for lambda
 def get_time_delta_hour(x):
     """
-    The function for pandas lambda method, covert datatime into seconds.
+    Converts a datetime object into seconds.
+
+    Args:
+        x (pandas.Timestamp): A pandas Timestamp object.
+
+    Returns:
+        float: The time delta in hours.
     """
     t_d = (x - pd.Timestamp("2020-08-01 00:00:00"))
     hour_sec = t_d.seconds / 3600
@@ -85,26 +96,42 @@ def get_time_delta_hour(x):
     return hour_sec + hour_day
 
 
-# sleep data
 def get_subject_sleep_hour(sleep_pd):
     """
-    Read the time from the sleep data.
+    Reads the total sleep time from sleep data.
+
+    Args:
+        sleep_pd (pandas.DataFrame): A pandas DataFrame containing sleep data.
+
+    Returns:
+        float: The total sleep time in hours.
     """
     return sleep_pd["Total Minutes in Bed"].sum() / 60.0
 
 
 def assign_pd_time_activity(start, end):
-    """
-    Assign the datetime.
+   """
+   Assigns a datetime object to a given time interval.
+
+    Args:
+        start (str): The start time of the interval in the format HH:MM.
+        end (str): The end time of the interval in the format HH:MM.
+
+    Returns:
+        pandas.Timedelta: The time interval as a pandas Timedelta object.
     """
     return pd.to_timedelta(end + ":00") - pd.to_timedelta(start + ":00")
 
 
 def get_activity_value(activity_pd_input):
     """
-    Compute the total time of activity in a day.
-    :param activity_pd_input: Pandas.dataframe
-    :return: float.
+    Computes the total time spent on activities in a day.
+
+    Args:
+        activity_pd_input (pandas.DataFrame): A pandas DataFrame containing activity data.
+
+    Returns:
+        float: The total time spent on activities in hours.
     """
     activity_pd = activity_pd_input.copy().dropna()
     del activity_pd["Unnamed: 0"]
