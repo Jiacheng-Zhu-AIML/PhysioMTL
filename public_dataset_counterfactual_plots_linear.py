@@ -62,15 +62,6 @@ if __name__ == "__main__":
 
     PhysioMTL_model.fit(X_list=X_train_list, Y_list=Y_train_list, S_list=S_train_list)
 
-    """
-    s_vec_base = np.array([[ 25.        ], # Age
-                       [1.80        ], # Height (m)
-                       [ 75.        ], # weight (kg)
-                       [  1.0], # Activity (h)
-                       [  9.       ], # Sleep (h)
-                       [ 20.        ], # Stress (1)
-                       [  1.        ]]).reshape(-1, 1)
-    """
     s_vec_base = np.array([[23.],  # Age
                            [1.80],  # Height (m)
                            [85.],  # weight (kg)

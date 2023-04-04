@@ -173,7 +173,7 @@ if __name__ == "__main__":
         remtw_mse_list.append(remtw_mse)
         mean_mse_list.append(mean_mse)
 
-    # Notice: Done
+    # Notice: 
     print()
     print("At the end of the day")
     print()
