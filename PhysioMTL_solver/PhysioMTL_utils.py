@@ -16,6 +16,7 @@ def underlying_truth(s):
 
     Returns:
         tuple: A tuple containing the amplitude A, phase phi, and the vertical shift M.
+        
     """
     A = 0.2 * s + 3.0
     phi = 0.4 * s - 1.8
@@ -38,6 +39,7 @@ def get_rainbow_curves_new(s_list_input, data_noise=0.1, underlying_func=underly
                - A list of feature X for each task, for multitask regression.
                - A list of task indicator s for each task, for multitask regression.
                - A list of target X for each task, for multitask regression.
+               
     """
     t_list = []  # t index for plot
     x_list = []  # X feature for regression
@@ -80,6 +82,7 @@ def process_for_PhysioMTL(raw_t_list, raw_x_list, raw_s_list, raw_y_list):
                 - A list of feature X for each task, for multitask regression.
                 - A list of taskwise feature S for each task, for multitask regression.
                 - A list of target X for each task, for multitask regression.
+                
     """
     X_train_list = []
     S_train_list = []
@@ -115,6 +118,7 @@ def process_for_MTL(raw_t_list, raw_x_list, raw_s_list, raw_y_list):
         tuple: A tuple containing the following two arrays:
                - An array of X_mat for multitask regression.
                - An array of Y_mat for multitask regression.
+               
     """
     task_num = len(raw_t_list)
 
@@ -140,6 +144,7 @@ def k_nearest_list(value, list_input, k):
 
     Returns:
         list: A list of the top k nearest elements.
+        
     """
     ans = [n for d, n in sorted((abs(x - value), x) for x in list_input)[:k]]
     return ans
@@ -157,6 +162,7 @@ def k_nearest_model_para(train_W, train_s_list, test_s_list, k=2):
 
     Returns:
         list: A list of model parameter matrices with shape (feature_d, k) for each task in the testing set.
+        
     """
     model_para_mat_list = []
     for s_test in test_s_list:
@@ -179,6 +185,7 @@ def compute_list_rmse(list_a, list_b):
 
     Returns:
         float: The average RMSE error.
+        
     """
     if len(list_a) != len(list_b):
         print("Something is wrong")
@@ -201,6 +208,7 @@ def get_rainbow_from_s(s):
 
     Returns:
         ndarray: An ndarray from cm.rainbow().
+        
     """
     colors_f = cm.rainbow(0.1 * np.linspace(0, 10, 101))
     l_np = np.linspace(0, 10, 101)
@@ -224,6 +232,7 @@ def scatter_data_with_s_qua(plt, t_list_raw, Y_raw_list, S_raw_list, rainbow_fun
 
     Returns:
         plt (matplotlib.pyplot object): A matplotlib.pyplot object with the scatter plot plotted on.
+        
     """
     for task_i, s_value in enumerate(S_raw_list):
         plt.scatter(t_list_raw[task_i], Y_raw_list[task_i], color=rainbow_func(s_value), **kwargs)
@@ -244,6 +253,7 @@ def plot_data_curve_with_s_qua(t_list_or_np, Y_list, S_raw_list, rainbow_func=ge
 
     Returns:
         plt (matplotlib.pyplot object): A matplotlib.pyplot object with the scatter plot plotted on.
+        
     """
     if isinstance(t_list_or_np, list):
         for task_i, s_value in enumerate(S_raw_list):

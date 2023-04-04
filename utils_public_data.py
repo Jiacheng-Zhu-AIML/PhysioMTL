@@ -65,8 +65,17 @@ def get_baseline_MTL_mse(baseline_model_obj, X_train_mat, Y_train_mat, raw_train
 
 def get_pred_Y_test_mtl(model_para_list, x_raw_test_list, s_raw_test_list, prior_mean=0):
     """
-    Use the model parameters to predict the target values give test features.
-    Used in get_baseline_MTL_mse().
+    Predicts target values given test features and model parameters.
+
+    Args:
+        model_para_list (list of numpy arrays): A list of numpy arrays representing the model parameters for each task.
+        x_raw_test_list (list of numpy arrays): A list of numpy arrays representing the test features for each task.
+        s_raw_test_list (list of numpy arrays): A list of numpy arrays representing the task-wise features for each task.
+        prior_mean (float, optional): A scalar value representing the prior mean. Defaults to 0.
+
+    Returns:
+        list of numpy arrays: A list of numpy arrays representing the predicted target values for each task.
+        
     """
     Y_pred_list = []
 
@@ -242,6 +251,7 @@ def change_labels(ax):
 
     Returns:
         None.
+        
     """
     ax.legend(loc="lower right", fontsize=14)
 
@@ -263,12 +273,14 @@ def change_labels(ax):
 def investigate_all_model_save(model, s_vec_base):
     """
     Do the counterfactual analysis, plot and save the results.
+    
     Args:
         model: The PhysioMTL solver with nonlinear map.
         s_vec_base: The baseline taskwise demographic feature.
 
     Returns:
         None
+        
     """
     t_test = np.linspace(8, 36, 30)
     X_test = np.asarray([np.sin(human_feq * t_test),
@@ -389,12 +401,14 @@ def investigate_all_model_save(model, s_vec_base):
 def investigate_all_model_save_linear(model, s_vec_base):
     """
     Do the counterfactual analysis, plot and save the results.
+    
     Args:
         model: The PhysioMTL solver with nonlinear map.
         s_vec_base: The baseline taskwise demographic feature.
 
     Returns:
         None
+        
     """
     t_test = np.linspace(8, 36, 30)
     X_test = np.asarray([np.sin(human_feq * t_test),
@@ -523,6 +537,7 @@ def get_raw_list_from_public_data_custom(data_dict_input, removed_list):
 
     Returns:
         tuple: A tuple containing the lists of time indices, input features, task-wise features, targets, and subject IDs.
+        
     """
     human_feq = 2.0 * np.pi / 24
     

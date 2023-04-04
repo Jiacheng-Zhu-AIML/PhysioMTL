@@ -15,6 +15,7 @@ def sinkhorn_plan(cost_matrix, r, c, lam, epsilon=1e-5):
 
     Returns:
         tuple: A tuple containing the optimal transport matrix with shape (n x m) and the Sinkhorn distance.
+        
     """
     n, m = cost_matrix.shape
     P = np.exp(- lam * cost_matrix)
@@ -55,6 +56,7 @@ class PhysioMTL:
         W_grad_F_norm_threshold (float, optional): The threshold that prevents gradient explosion when updating regressors
             W. Defaults to 1e-7.
         all_ite_num (int, optional): The total iteration number of the algorithm. Defaults to 50.
+        
     """
 
     def __init__(self, alpha=0.1, T_initial=None,
